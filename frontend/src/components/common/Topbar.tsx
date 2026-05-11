@@ -1,24 +1,132 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Topbar: React.FC = () => {
+  const navigate = useNavigate();
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+
+  const notifications = [
+    {
+      title: 'Server Room load is rising',
+      detail: 'Usage crossed 80% of the configured threshold 4 minutes ago.',
+      tone: 'text-amber-400',
+    },
+    {
+      title: 'Breaker sync completed',
+      detail: 'All paired switches have refreshed their live status successfully.',
+      tone: 'text-emerald-400',
+    },
+    {
+      title: 'New analytics snapshot ready',
+      detail: 'A fresh energy summary has been generated for Block A.',
+      tone: 'text-blue-400',
+    },
+  ];
+
+  const goToSettings = () => {
+    setProfileOpen(false);
+    navigate('/settings');
+  };
+
+  const logOut = () => {
+    setProfileOpen(false);
+    navigate('/login');
+  };
+
   return (
-    <header className="h-16 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-6 text-slate-300">
+    <header className="relative z-20 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-900/90 px-6 text-slate-300 backdrop-blur-xl">
       <div className="flex items-center space-x-4">
-        <select className="bg-slate-800 border border-slate-700 text-sm rounded px-3 py-1.5 focus:outline-none">
+        <select className="rounded border border-slate-700 bg-slate-800 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30">
           <option>Main Building - Block A</option>
           <option>Warehouse B</option>
         </select>
       </div>
-      <div className="flex items-center space-x-6">
-        <div className="relative cursor-pointer">
-          <span className="text-xl">🔔</span>
-          <span className="absolute -top-1 -right-1 h-3 w-3 bg-rose-500 rounded-full border border-slate-900"></span>
+      <div className="flex items-center space-x-4">
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setNotificationsOpen((current) => !current);
+              setProfileOpen(false);
+            }}
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-700 bg-slate-800/80 text-xl transition hover:border-blue-500/60 hover:bg-slate-700/80"
+            aria-expanded={notificationsOpen}
+            aria-label="Toggle notifications"
+          >
+            <span className="animate-pulse-glow">🔔</span>
+            <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full border border-slate-900 bg-rose-500"></span>
+          </button>
+
+          {notificationsOpen ? (
+            <div className="absolute right-0 top-12 w-[22rem] overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/95 shadow-2xl shadow-slate-950/60">
+              <div className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-slate-100">Notifications</p>
+                  <p className="text-xs text-slate-400">3 new updates</p>
+                </div>
+                <span className="rounded-full bg-blue-500/15 px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-blue-300">
+                  Live
+                </span>
+              </div>
+              <div className="divide-y divide-slate-800">
+                {notifications.map((notification) => (
+                  <div key={notification.title} className="px-4 py-3 transition hover:bg-slate-900/80">
+                    <div className="flex items-start gap-3">
+                      <span className={`mt-1 h-2.5 w-2.5 rounded-full ${notification.tone.replace('text-', 'bg-')}`} />
+                      <div>
+                        <p className="text-sm font-medium text-slate-100">{notification.title}</p>
+                        <p className="mt-1 text-sm leading-5 text-slate-400">{notification.detail}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
-        <div className="flex items-center space-x-2 cursor-pointer">
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold text-white">
-            AD
-          </div>
-          <span className="text-sm font-medium hidden md:block">Admin</span>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setProfileOpen((current) => !current);
+              setNotificationsOpen(false);
+            }}
+            className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/80 px-2 py-1.5 transition hover:border-blue-500/60 hover:bg-slate-700/80"
+            aria-expanded={profileOpen}
+            aria-label="Open profile menu"
+          >
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-bold text-white shadow-lg shadow-blue-500/30">
+              AD
+            </div>
+            <span className="hidden pr-1 text-sm font-medium text-slate-200 md:block">Admin</span>
+          </button>
+
+          {profileOpen ? (
+            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/95 shadow-2xl shadow-slate-950/60">
+              <div className="border-b border-slate-800 px-4 py-3">
+                <p className="text-sm font-semibold text-slate-100">Admin</p>
+                <p className="text-xs text-slate-400">admin@smartems.local</p>
+              </div>
+              <div className="p-2">
+                <button
+                  type="button"
+                  onClick={goToSettings}
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-900 hover:text-slate-100"
+                >
+                  Profile settings
+                </button>
+                <button
+                  type="button"
+                  onClick={logOut}
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+                >
+                  Log out
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </header>
