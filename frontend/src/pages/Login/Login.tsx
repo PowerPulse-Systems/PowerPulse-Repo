@@ -10,7 +10,16 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-900 text-slate-200">
+    <div className="relative min-h-screen flex bg-slate-900 text-slate-200">
+      <Link 
+        to="/" 
+        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center text-slate-400 hover:text-slate-200 transition-colors z-10"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+          <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+        </svg>
+        Back to Home
+      </Link>
       <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-slate-800 p-12">
         <h1 className="text-4xl font-bold text-blue-400 mb-4">SmartEMS</h1>
         <p className="text-xl text-slate-400 text-center max-w-md">
