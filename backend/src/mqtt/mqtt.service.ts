@@ -27,7 +27,7 @@ export class MqttService implements OnModuleInit {
     this.client = mqtt.connect(brokerUrl);
 
     this.client.on('connect', () => {
-      this.logger.log(Connected to MQTT broker at $"{brokerUrl}");
+      this.logger.log(`Connected to MQTT broker at ${brokerUrl}`);
       
       // Subscribe to all telemetry topics
       this.client.subscribe('bems/+/+/current', (err) => {
@@ -50,7 +50,7 @@ export class MqttService implements OnModuleInit {
 
   private handleIncomingMessage(topic: string, message: string) {
     // Expected topic: bems/buildingId/deviceId/current
-    this.logger.log(Received message on topic $"{topic}: $"{message}");
+    this.logger.log(`Received message on topic ${topic}: ${message}`);
     
     try {
       const parts = topic.split('/');
@@ -67,7 +67,7 @@ export class MqttService implements OnModuleInit {
   publish(topic: string, message: string) {
     if (this.client && this.client.connected) {
       this.client.publish(topic, message);
-      this.logger.log(Published to $"{topic}");
+      this.logger.log(`Published to ${topic}`);
     } else {
       this.logger.error('Cannot publish. MQTT client is not connected.');
     }
