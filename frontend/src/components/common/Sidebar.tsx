@@ -14,7 +14,7 @@ const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 h-screen flex flex-col text-slate-300">
+    <aside className="w-64 bg-slate-900 border-r border-slate-800 h-screen flex flex-col text-slate-300 dark:bg-slate-900 dark:border-slate-800 light:bg-white light:border-slate-200 light:text-slate-700">
       <div className="p-6 text-2xl font-bold text-blue-500 border-b border-slate-800">
         SmartEMS
       </div>
@@ -26,7 +26,7 @@ const Sidebar: React.FC = () => {
                 to={link.path}
                 className={({ isActive }) =>
                   `block px-6 py-3 text-sm font-medium transition-colors ${
-                    isActive ? 'bg-blue-900/50 text-blue-400 border-r-4 border-blue-500' : 'hover:bg-slate-800 hover:text-slate-100'
+                    isActive ? 'bg-blue-900/50 text-blue-400 border-r-4 border-blue-500 light:bg-blue-100 light:text-blue-600 light:border-r-4 light:border-blue-600' : 'hover:bg-slate-800 hover:text-slate-100 light:hover:bg-slate-100 light:hover:text-slate-900'
                   }`
                 }
               >
@@ -36,7 +36,7 @@ const Sidebar: React.FC = () => {
           ))}
         </ul>
       </nav>
-      <div className="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
+      <div className="p-4 border-t border-slate-800 text-xs text-slate-500 text-center dark:border-slate-800 dark:text-slate-500 light:border-slate-200 light:text-slate-600">
         System Status: <span className="text-emerald-500 font-semibold">Online</span>
       </div>
     </aside>
