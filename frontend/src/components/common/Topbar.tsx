@@ -105,34 +105,34 @@ const Topbar: React.FC = () => {
               setProfileOpen((current) => !current);
               setNotificationsOpen(false);
             }}
-            className="flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/80 px-2 py-1.5 transition hover:border-blue-500/60 hover:bg-slate-700/80 dark:border-slate-700 dark:bg-slate-800/80 light:border-slate-300 light:bg-slate-200/80 light:hover:border-blue-400/60 light:hover:bg-slate-300/80"
+            className="flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100 hover:bg-slate-200 px-2 py-1.5 transition hover:border-blue-400/60 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-blue-500/60 dark:hover:bg-slate-700/80"
             aria-expanded={profileOpen}
             aria-label="Open profile menu"
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-sm font-bold text-white shadow-lg shadow-blue-500/30">
               AD
             </div>
-            <span className="hidden pr-1 text-sm font-medium text-slate-200 md:block dark:text-slate-200 light:text-slate-900">Admin</span>
+            <span className="hidden pr-1 text-sm font-medium text-slate-900 md:block dark:text-slate-200">Admin</span>
           </button>
 
           {profileOpen ? (
-            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-slate-700 bg-slate-950/95 shadow-2xl shadow-slate-950/60 dark:border-slate-700 dark:bg-slate-950/95 light:border-slate-300 light:bg-white/95 light:shadow-slate-300/60">
-              <div className="border-b border-slate-800 px-4 py-3 dark:border-slate-800 light:border-slate-200">
-                <p className="text-sm font-semibold text-slate-100 dark:text-slate-100 light:text-slate-900">Admin</p>
-                <p className="text-xs text-slate-400 dark:text-slate-400 light:text-slate-600">admin@smartems.local</p>
+            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-slate-300 bg-white/95 shadow-2xl shadow-slate-300/60 dark:border-slate-700 dark:bg-slate-950/95 dark:shadow-slate-950/60">
+              <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Admin</p>
+                <p className="text-xs text-slate-600 dark:text-slate-400">admin@smartems.local</p>
               </div>
               <div className="p-2">
                 <button
                   type="button"
                   onClick={goToSettings}
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-300 transition hover:bg-slate-900 hover:text-slate-100 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100 light:text-slate-700 light:hover:bg-slate-100 light:hover:text-slate-900"
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100"
                 >
                   Profile settings
                 </button>
                 <button
                   type="button"
                   onClick={logOut}
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200 dark:text-rose-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-200 light:text-rose-600 light:hover:bg-rose-100/50 light:hover:text-rose-700"
+                  className="w-full rounded-xl px-3 py-2 text-left text-sm text-rose-600 transition hover:bg-rose-100/50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-500/10 dark:hover:text-rose-200"
                 >
                   Log out
                 </button>
