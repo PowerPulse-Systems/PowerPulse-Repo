@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import sidePaneImage from '../../assets/login side pane.png';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -13,19 +14,28 @@ const Login: React.FC = () => {
     <div className="relative min-h-screen flex bg-slate-900 text-slate-200">
       <Link 
         to="/" 
-        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center text-slate-400 hover:text-slate-200 transition-colors z-10"
+        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center text-slate-400 hover:text-slate-200 transition-colors z-20"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
         </svg>
         Back to Home
       </Link>
-
-      <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-slate-800 p-12 dark:bg-slate-800 light:bg-slate-100">
-        <h1 className="text-4xl font-bold text-blue-400 mb-4">SmartEMS</h1>
-        <p className="text-xl text-slate-400 text-center max-w-md dark:text-slate-400 light:text-slate-600">
-          Industrial-grade dashboard for precise energy tracking and automation.
-        </p>
+      <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-slate-800 relative overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center z-0 opacity-40 mix-blend-overlay"
+          style={{ backgroundImage: `url("${sidePaneImage}")` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent z-0" />
+        
+        {/* Content */}
+        <div className="z-10 flex flex-col items-center p-12 text-center">
+          <h1 className="text-4xl font-bold text-blue-400 mb-4 drop-shadow-lg">SmartEMS</h1>
+          <p className="text-xl text-slate-200 max-w-md drop-shadow-md">
+            Industrial-grade dashboard for precise energy tracking and automation.
+          </p>
+        </div>
       </div>
 
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
