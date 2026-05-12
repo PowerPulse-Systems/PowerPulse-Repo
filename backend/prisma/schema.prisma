@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("Viewer") // Admin, Facility Manager, Technician, Viewer
+  createdAt    DateTime @default(now())
+}
+
+model Building {
+  id        String   @id @default(uuid())
+  name      String
+  address   String?
+  panels    Panel[]
+}
+
+model Panel {
+  id         String    @id @default(uuid())
+  name       String
+  buildingId String
+  building   Building  @relation(fields: [buildingId], references: [id])
+  breakers   Breaker[]
+}
+
+model Device {
+  id              String    @id @default(uuid())
+  macAddress      String    @unique
+  type            String    // Main board, Sensor node, Switch node
+  firmwareVersion String?
+  onlineStatus    Boolean   @default(false)
+  lastSeen        DateTime?
+  breakers        Breaker[]
+}
+
+model Breaker {
+  id             String          @id @default(uuid())
+  label          String
+  phase          String?
+  panelId        String
+  deviceId       String
+  panel          Panel           @relation(fields: [panelId], references: [id])
+  device         Device          @relation(fields: [deviceId], references: [id])
+  energyReadings EnergyReading[]
+}
+
+model EnergyReading {
+  id           String   @id @default(uuid())
+  breakerId    String
+  periodStart  Int
+  periodEnd    Int
+  energyWh     Float
+  avgPowerW    Float
+  peakPowerW   Float
+  createdAt    DateTime @default(now())
+  breaker      Breaker  @relation(fields: [breakerId], references: [id])
+}
+
+model Alert {
+  id           String   @id @default(uuid())
+  severity     String
+  message      String
+  acknowledged Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model AutomationRule {
+  id        String  @id @default(uuid())
+  condition String
+  action    String
+  enabled   Boolean @default(true)
+}
