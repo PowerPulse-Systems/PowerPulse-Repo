@@ -13,7 +13,7 @@ export class TelemetryService {
       // The guide suggests topic: bems/building1/node3/current or bems/building1/breaker5/current
       // We will look up a breaker or device based on the ID.
       
-      this.logger.log(Processing telemetry for $"{deviceId}:, payload);
+      this.logger.log(`Processing telemetry for ${deviceId}:`, payload);
       
       // We need to map the incoming node ID to a Breaker to store the EnergyReading properly.
       const device = await this.prisma.device.findUnique({
@@ -22,12 +22,12 @@ export class TelemetryService {
       });
 
       if (!device) {
-         this.logger.warn(Device $"{deviceId}" not found in DB);
+         this.logger.warn(`Device ${deviceId} not found in DB`);
          return;
       }
 
       if (device.breakers.length === 0) {
-         this.logger.warn(Device $"{deviceId}" has no attached breakers);
+         this.logger.warn(`Device ${deviceId} has no attached breakers`);
          return;
       }
       
@@ -46,15 +46,15 @@ export class TelemetryService {
           }
         });
         
-        this.logger.log(Saved energy reading for $"{device.macAddress}" / breaker $"{breaker.id}");
+        this.logger.log(`Saved energy reading for ${device.macAddress} / breaker ${breaker.id}`);
       }
       
       if (payload.event) {
-         this.logger.warn(Device $"{device.macAddress}" reported EVENT: $"{payload.event}");
+         this.logger.warn(`Device ${device.macAddress} reported EVENT: ${payload.event}`);
          // TODO: Alert logic
       }
     } catch (error) {
-      this.logger.error(Error processing telemetry: $"{error.message}");
+      this.logger.error(`Error processing telemetry: ${(error as Error).message}`);
     }
   }
 }
