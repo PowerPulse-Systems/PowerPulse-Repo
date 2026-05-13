@@ -63,8 +63,8 @@ const Login: React.FC = () => {
           <h2 className="text-3xl font-bold mb-6 text-center text-slate-900 dark:text-slate-100 transition-colors">Login</h2>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Email</label>
-              <input type="email" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="admin@example.com" />
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Username</label>
+              <input type="text" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="johndoe123" />
             </div>
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Password</label>

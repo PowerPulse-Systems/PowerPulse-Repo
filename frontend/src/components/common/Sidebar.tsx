@@ -26,7 +26,7 @@ const Sidebar: React.FC = () => {
                 to={link.path}
                 className={({ isActive }) =>
                   `block px-6 py-3 text-sm font-medium transition-colors ${
-                    isActive ? 'bg-blue-900/50 text-blue-400 border-r-4 border-blue-500' : 'hover:bg-slate-800 hover:text-slate-100'
+                    isActive ? 'bg-blue-600 text-white font-bold border-r-4 border-blue-300 shadow-md' : 'text-slate-300 hover:bg-slate-800 hover:text-white'
                   }`
                 }
               >
