@@ -3,13 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import sidePaneImage from '../../assets/login side pane.png';
 import { useTheme } from '../../context/ThemeContext';
 
-const Login: React.FC = () => {
+const Signup: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
 
-  const handleLogin = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    navigate('/dashboard');
+    // In a real app we'd do validation/api call here, then route to login or dashboard
+    navigate('/login');
   };
 
   return (
@@ -42,14 +43,12 @@ const Login: React.FC = () => {
       </button>
 
       <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-slate-50 dark:bg-slate-800 relative overflow-hidden transition-colors duration-300">
-        {/* Background Image with Overlay */}
         <div 
           className="absolute inset-0 bg-cover bg-center z-0 opacity-100 dark:opacity-40 transition-opacity"
           style={{ backgroundImage: `url("${sidePaneImage}")` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-50/50 to-transparent dark:from-slate-900 dark:via-slate-900/40 dark:to-transparent z-0 transition-colors duration-300 pointer-events-none" />
         
-        {/* Content */}
         <div className="z-10 flex flex-col items-center p-12 text-center">
           <h1 className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4 drop-shadow-sm dark:drop-shadow-lg">SmartEMS</h1>
           <p className="text-xl text-slate-700 dark:text-slate-200 max-w-md drop-shadow-sm dark:drop-shadow-md">
@@ -60,27 +59,28 @@ const Login: React.FC = () => {
 
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-300 dark:border-slate-700 transition-colors duration-300 shadow-sm dark:shadow-none">
-          <h2 className="text-3xl font-bold mb-6 text-center text-slate-900 dark:text-slate-100 transition-colors">Login</h2>
-          <form onSubmit={handleLogin} className="space-y-4">
+          <h2 className="text-3xl font-bold mb-6 text-center text-slate-900 dark:text-slate-100 transition-colors">Create Account</h2>
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div>
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Full Name</label>
+              <input type="text" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="John Doe" />
+            </div>
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Email</label>
-              <input type="email" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="admin@example.com" />
+              <input type="email" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="name@example.com" />
+            </div>
+            <div>
+              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Phone Number</label>
+              <input type="tel" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="+1 234 567 8900" />
             </div>
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Password</label>
               <input type="password" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="••••••••" />
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center space-x-2">
-                <input type="checkbox" className="rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 accent-blue-600" />
-                <span className="text-slate-600 dark:text-slate-400 transition-colors">Remember Me</span>
-              </label>
-              <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Forgot password?</a>
-            </div>
-            <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-500 font-semibold transition-colors duration-300">Login</button>
+            <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-500 font-semibold transition-colors duration-300 mt-2">Sign Up</button>
           </form>
           <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400 transition-colors">
-            Don't have an account? <Link to="/signup" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Create one</Link>
+            Already have an account? <Link to="/login" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Login here</Link>
           </div>
         </div>
       </div>
@@ -88,4 +88,4 @@ const Login: React.FC = () => {
   );
 };
 
-export default Login;
+export default Signup;
