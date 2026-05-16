@@ -13,6 +13,7 @@ model User {
   passwordHash String
   role         String   @default("Viewer") // Admin, Facility Manager, Technician, Viewer
   createdAt    DateTime @default(now())
+  devices      Device[]
 }
 
 model Building {
@@ -37,7 +38,10 @@ model Device {
   firmwareVersion String?
   onlineStatus    Boolean   @default(false)
   lastSeen        DateTime?
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
   breakers        Breaker[]
+  createdAt       DateTime  @default(now())
 }
 
 model Breaker {

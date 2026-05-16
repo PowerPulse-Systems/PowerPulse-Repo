@@ -1,16 +1,39 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import sidePaneImage from '../../assets/login side pane.png';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { signup } = useAuth();
 
-  const handleSignup = (e: React.FormEvent<HTMLFormElement>) => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // In a real app we'd do validation/api call here, then route to login or dashboard
-    navigate('/login');
+    setError('');
+    setLoading(true);
+
+    try {
+      await signup(name, email, password);
+      navigate('/dashboard');
+    } catch (err: any) {
+      if (err.response?.status === 409) {
+        setError('An account with this email already exists.');
+      } else if (!err.response) {
+        setError('Network error: Unable to connect to the server.');
+      } else {
+        setError(err.response?.data?.message || 'Signup failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,28 +83,35 @@ const Signup: React.FC = () => {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="max-w-md w-full bg-white dark:bg-slate-800 p-8 rounded-xl border border-slate-300 dark:border-slate-700 transition-colors duration-300 shadow-sm dark:shadow-none">
           <h2 className="text-3xl font-bold mb-6 text-center text-slate-900 dark:text-slate-100 transition-colors">Create Account</h2>
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded dark:bg-red-900/30 dark:border-red-800 dark:text-red-400" role="alert">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSignup} className="space-y-4">
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Full Name</label>
-              <input type="text" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="John Doe" />
-            </div>
-            <div>
-              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Username</label>
-              <input type="text" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="johndoe123" />
+              <input type="text" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="John Doe" />
             </div>
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Email</label>
-              <input type="email" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="name@example.com" />
-            </div>
-            <div>
-              <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Phone Number</label>
-              <input type="tel" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="+1 234 567 8900" />
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="name@example.com" />
             </div>
             <div>
               <label className="block text-sm text-slate-600 dark:text-slate-400 mb-1 transition-colors">Password</label>
-              <input type="password" required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="••••••••" />
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded text-slate-900 dark:text-slate-200 focus:outline-none focus:border-blue-500 transition-colors" placeholder="••••••••" />
             </div>
-            <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-500 font-semibold transition-colors duration-300 mt-2">Sign Up</button>
+            <button type="submit" disabled={loading} className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-500 font-semibold transition-colors duration-300 mt-2 disabled:opacity-70 disabled:cursor-not-allowed flex justify-center items-center">
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Creating account...
+                </>
+              ) : 'Sign Up'}
+            </button>
           </form>
           <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400 transition-colors">
             Already have an account? <Link to="/login" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Login here</Link>
