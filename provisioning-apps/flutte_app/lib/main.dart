@@ -42,6 +42,11 @@ class AppState extends ChangeNotifier {
     wifiPassword = '';
     notifyListeners();
   }
+
+  void logout() {
+    token = null;
+    reset();
+  }
 }
 
 void main() {
@@ -194,13 +199,30 @@ class _MainContainerState extends State<MainContainer> {
           if (isAuthenticated)
             Row(
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(color: Color(0xFF34D399), shape: BoxShape.circle), // emerald-400
-                ),
+                if (_currentIndex > 0 && _currentIndex < 4) // Show back on Scan, Configure, Provisioning
+                  TextButton.icon(
+                    onPressed: () {
+                      if (_currentIndex == 3) {
+                        // Special case: going back from provisioning shouldn't jump to configure if provisioning already started, but we'll let it happen
+                        _navigateTo(2);
+                      } else {
+                        _navigateTo(_currentIndex - 1);
+                      }
+                    },
+                    icon: const Icon(Icons.arrow_back, size: 16),
+                    label: const Text('Back'),
+                    style: TextButton.styleFrom(foregroundColor: const Color(0xFF94A3B8)),
+                  ),
                 const SizedBox(width: 8),
-                const Text('Logged in', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)), // slate-400
+                TextButton.icon(
+                  onPressed: () {
+                    context.read<AppState>().logout();
+                    _navigateTo(0);
+                  },
+                  icon: const Icon(Icons.logout, size: 16),
+                  label: const Text('Logout'),
+                  style: TextButton.styleFrom(foregroundColor: const Color(0xFFF87171)), // red-400
+                ),
               ],
             )
         ],

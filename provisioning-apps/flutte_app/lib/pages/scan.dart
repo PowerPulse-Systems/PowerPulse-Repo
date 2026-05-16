@@ -69,53 +69,57 @@ class _ScanPageState extends State<ScanPage> with SingleTickerProviderStateMixin
     final ble = context.read<AppState>().ble;
 
     return Center(
-      child: Container(
-        width: 500,
-        margin: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const Text('Scanning for Devices', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 8),
-            const Text('Looking for PowerPulse devices in BLE range...', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
-            const SizedBox(height: 32),
-
-            if (_isScanning) _buildRadar(),
-            const SizedBox(height: 32),
-
-            Expanded(
-              child: StreamBuilder<List<DeviceModel>>(
-                stream: ble.scanResults,
-                builder: (context, snapshot) {
-                  final devices = snapshot.data ?? [];
-                  
-                  if (!_isScanning && devices.isEmpty) {
-                    return const Center(
-                      child: Text('No devices found.\nMake sure your PowerPulse device is powered on.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B))),
+      child: SingleChildScrollView(
+        child: Container(
+          width: 500,
+          margin: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Text('Scanning for Devices', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 8),
+              const Text('Looking for PowerPulse devices in BLE range...', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
+              const SizedBox(height: 32),
+  
+              if (_isScanning) _buildRadar(),
+              const SizedBox(height: 32),
+  
+              Container(
+                constraints: const BoxConstraints(minHeight: 150, maxHeight: 300),
+                child: StreamBuilder<List<DeviceModel>>(
+                  stream: ble.scanResults,
+                  builder: (context, snapshot) {
+                    final devices = snapshot.data ?? [];
+                    
+                    if (!_isScanning && devices.isEmpty) {
+                      return const Center(
+                        child: Text('No devices found.\nMake sure your PowerPulse device is powered on.', textAlign: TextAlign.center, style: TextStyle(color: Color(0xFF64748B))),
+                      );
+                    }
+  
+                    return ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: devices.length,
+                      itemBuilder: (context, index) {
+                        return _buildDeviceCard(devices[index]);
+                      },
                     );
-                  }
-
-                  return ListView.builder(
-                    itemCount: devices.length,
-                    itemBuilder: (context, index) {
-                      return _buildDeviceCard(devices[index]);
-                    },
-                  );
-                },
+                  },
+                ),
               ),
-            ),
-
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isScanning ? _stopScan : _startScan,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _isScanning ? const Color(0xFF1E293B) : const Color(0xFF2563EB),
-                foregroundColor: _isScanning ? const Color(0xFFCBD5E1) : Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(_isScanning ? 'Stop Scanning' : 'Rescan'),
-            )
-          ],
+  
+              const SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _isScanning ? _stopScan : _startScan,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: _isScanning ? const Color(0xFF1E293B) : const Color(0xFF2563EB),
+                  foregroundColor: _isScanning ? const Color(0xFFCBD5E1) : Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                child: Text(_isScanning ? 'Stop Scanning' : 'Rescan'),
+              )
+            ],
+          ),
         ),
       ),
     );

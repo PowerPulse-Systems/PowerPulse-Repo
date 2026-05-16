@@ -90,13 +90,13 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
 
       // Register step
       _updateStep(3, 'active');
-      final regSuccess = await state.api.registerDevice(widget.device.mac);
-      if (!regSuccess) throw Exception('Registration failed');
+      final dbDeviceId = await state.api.registerDevice(widget.device.mac);
+      if (dbDeviceId == null) throw Exception('Registration failed');
       _updateStep(3, 'done');
 
       // Claim step
       _updateStep(4, 'active');
-      final claimSuccess = await state.api.claimDevice(widget.device.id);
+      final claimSuccess = await state.api.claimDevice(dbDeviceId);
       if (!claimSuccess) throw Exception('Claim failed');
       _updateStep(4, 'done');
 
@@ -115,50 +115,52 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
-        width: 500,
-        margin: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const Text('Provisioning Device', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 8),
-            Text('${widget.device.name} → ${widget.ssid}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
-            const SizedBox(height: 32),
-
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: const Color(0xCC0F172A),
-                border: Border.all(color: const Color(0xFF1E293B)),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                children: List.generate(_steps.length, (i) => _buildStepItem(_steps[i])),
-              ),
-            ),
-
-            if (_errorMsg != null)
+      child: SingleChildScrollView(
+        child: Container(
+          width: 500,
+          margin: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const Text('Provisioning Device', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+              const SizedBox(height: 8),
+              Text('${widget.device.name} → ${widget.ssid}', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14)),
+              const SizedBox(height: 32),
+  
               Container(
-                margin: const EdgeInsets.only(top: 24),
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: const Color(0x1AEF4444),
-                  border: Border.all(color: const Color(0x33EF4444)),
-                  borderRadius: BorderRadius.circular(12),
+                  color: const Color(0xCC0F172A),
+                  border: Border.all(color: const Color(0xFF1E293B)),
+                  borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
-                  children: [
-                    Text(_errorMsg!, style: const TextStyle(color: Color(0xFFF87171))),
-                    const SizedBox(height: 12),
-                    ElevatedButton(
-                      onPressed: widget.onError,
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E293B)),
-                      child: const Text('Start Over'),
-                    )
-                  ],
+                  children: List.generate(_steps.length, (i) => _buildStepItem(_steps[i])),
                 ),
-              )
-          ],
+              ),
+  
+              if (_errorMsg != null)
+                Container(
+                  margin: const EdgeInsets.only(top: 24),
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0x1AEF4444),
+                    border: Border.all(color: const Color(0x33EF4444)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(_errorMsg!, style: const TextStyle(color: Color(0xFFF87171))),
+                      const SizedBox(height: 12),
+                      ElevatedButton(
+                        onPressed: widget.onError,
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E293B)),
+                        child: const Text('Start Over'),
+                      )
+                    ],
+                  ),
+                )
+            ],
+          ),
         ),
       ),
     );

@@ -27,7 +27,7 @@ class ApiService {
     }
   }
 
-  Future<bool> registerDevice(String macAddress) async {
+  Future<String?> registerDevice(String macAddress) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -44,9 +44,13 @@ class ApiService {
           'firmwareVersion': '1.0.0'
         }),
       );
-      return response.statusCode == 201 || response.statusCode == 200;
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['id']; // Return the actual database UUID
+      }
+      return null;
     } catch (e) {
-      return false;
+      return null;
     }
   }
 
