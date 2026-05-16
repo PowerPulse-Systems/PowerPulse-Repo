@@ -1,0 +1,71 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+
+class ApiService {
+  // Use 10.0.2.2 for Android emulator to access localhost, otherwise localhost
+  static const String baseUrl = 'http://localhost:3000';
+
+  Future<Map<String, dynamic>?> login(String email, String password) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', data['access_token']);
+        return data;
+      }
+      return null; // Login failed
+    } catch (e) {
+      print('API Error: $e');
+      return null;
+    }
+  }
+
+  Future<bool> registerDevice(String macAddress) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/devices/register'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'macAddress': macAddress,
+          'type': 'breaker-node',
+          'firmwareVersion': '1.0.0'
+        }),
+      );
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> claimDevice(String deviceId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/devices/claim'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'deviceId': deviceId}),
+      );
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
+}
