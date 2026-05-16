@@ -21,15 +21,33 @@ export class MqttService implements OnModuleInit {
 
   private connectToBroker() {
     const brokerUrl = this.configService.get<string>('MQTT_BROKER_URL');
+    const username = this.configService.get<string>('MQTT_USERNAME');
+    const password = this.configService.get<string>('MQTT_PASSWORD');
+
     if (!brokerUrl) {
       this.logger.error('MQTT_BROKER_URL is not defined in the environment variables.');
       return;
     }
 
-    this.client = mqtt.connect(brokerUrl);
+    let isFirstConnect = true;
+    let hasLoggedError = false;
+
+    const options: mqtt.IClientOptions = {};
+    if (username) options.username = username;
+    if (password) options.password = password;
+    
+    // Using mqtts usually requires setting protocol properly, the URL schema (mqtts://) handles this mostly.
+
+    this.client = mqtt.connect(brokerUrl, options);
 
     this.client.on('connect', () => {
-      this.logger.log(`Connected to MQTT broker at ${brokerUrl}`);
+      if (isFirstConnect) {
+        this.logger.log('✅ MQTT Broker is up and running');
+        isFirstConnect = false;
+      } else {
+        this.logger.log('✅ Reconnected to MQTT Broker');
+      }
+      hasLoggedError = false;
       
       // Subscribe to telemetry topics
       this.client.subscribe('bems/+/+/current', (err) => {
@@ -64,7 +82,10 @@ export class MqttService implements OnModuleInit {
     });
 
     this.client.on('error', (err) => {
-      this.logger.error('MQTT Connection Error', err);
+      if (!hasLoggedError) {
+        this.logger.error('❌ CRITICAL: MQTT Connection failed. Please check if your broker is running. Suppressing further error logs until reconnected.');
+        hasLoggedError = true;
+      }
     });
   }
 
