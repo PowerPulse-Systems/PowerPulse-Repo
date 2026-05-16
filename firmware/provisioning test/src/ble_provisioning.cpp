@@ -5,6 +5,7 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include <ArduinoJson.h>
+#include <WiFi.h>
 
 static BLEServer* pServer = nullptr;
 static BLECharacteristic* pWriteChar = nullptr;
@@ -35,7 +36,8 @@ class ServerCallbacks : public BLEServerCallbacks {
 // ========================
 class ProvisionWriteCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* pCharacteristic) override {
-    String value = pCharacteristic->getValue();
+    std::string rxValue = pCharacteristic->getValue();
+    String value = rxValue.c_str();
     
     if (value.length() == 0) {
       Serial.println("[BLE] Empty write received");
@@ -122,7 +124,7 @@ void BleProvisioning::start(const char* deviceName, ProvisioningCallback callbac
   infoDoc["type"] = "breaker-node";
   String infoStr;
   serializeJson(infoDoc, infoStr);
-  pInfoChar->setValue(infoStr);
+  pInfoChar->setValue(infoStr.c_str());
 
   // Start service and advertising
   pService->start();
