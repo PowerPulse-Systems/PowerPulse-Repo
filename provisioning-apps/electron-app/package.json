@@ -43,6 +43,10 @@
         "schemes": ["powerpulse"]
       }
     ],
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
     "win": {
       "target": "nsis"
     }
