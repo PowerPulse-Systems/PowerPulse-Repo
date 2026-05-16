@@ -105,7 +105,7 @@ const Topbar: React.FC = () => {
               setProfileOpen((current) => !current);
               setNotificationsOpen(false);
             }}
-            className="flex items-center gap-2 rounded-full border border-slate-300 bg-slate-200/80 px-2 py-1.5 transition hover:border-blue-400/60 hover:bg-slate-300/80 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-blue-500/60 dark:hover:bg-slate-700/80"
+            className="flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100 hover:bg-slate-200 px-2 py-1.5 transition hover:border-blue-400/60 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-blue-500/60 dark:hover:bg-slate-700/80"
             aria-expanded={profileOpen}
             aria-label="Open profile menu"
           >
@@ -116,7 +116,7 @@ const Topbar: React.FC = () => {
           </button>
 
           {profileOpen ? (
-            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-slate-300 bg-white/95 shadow-2xl shadow-slate-300/60 transition-colors duration-300 dark:border-slate-700 dark:bg-slate-950/95 dark:shadow-slate-950/60">
+            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-slate-300 bg-white/95 shadow-2xl shadow-slate-300/60 dark:border-slate-700 dark:bg-slate-950/95 dark:shadow-slate-950/60">
               <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Admin</p>
                 <p className="text-xs text-slate-600 dark:text-slate-400">admin@smartems.local</p>
