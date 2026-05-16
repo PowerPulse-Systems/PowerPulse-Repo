@@ -1,7 +1,6 @@
 import 'dart:async';
 import '../models/device.dart';
-// Note: In a real app, you would import universal_ble here
-// import 'package:universal_ble/universal_ble.dart';
+import 'package:universal_ble/universal_ble.dart';
 
 class BleService {
   final StreamController<List<DeviceModel>> _scanController = StreamController<List<DeviceModel>>.broadcast();
@@ -10,35 +9,52 @@ class BleService {
   Stream<List<DeviceModel>> get scanResults => _scanController.stream;
   Stream<String> get statusUpdates => _statusController.stream;
 
-  List<DeviceModel> _mockDevices = [];
-  Timer? _scanTimer;
+  List<DeviceModel> _scannedDevices = [];
 
-  // --- Simulated Implementation (matching the Electron mock) ---
+  // --- Real Scanning Implementation ---
 
   Future<void> startScan() async {
-    _mockDevices.clear();
-    _scanController.add(_mockDevices);
+    _scannedDevices.clear();
+    _scanController.add(_scannedDevices);
 
-    // Simulate finding devices over time
-    _scanTimer = Timer.periodic(const Duration(seconds: 2), (timer) {
-      if (_mockDevices.isEmpty) {
-        _mockDevices.add(DeviceModel(id: 'dev-1', name: 'PP-Setup-A1B2', mac: 'AA:BB:CC:DD:A1:B2', rssi: -42));
-      } else if (_mockDevices.length == 1) {
-        _mockDevices.add(DeviceModel(id: 'dev-2', name: 'PP-Setup-C3D4', mac: 'AA:BB:CC:DD:C3:D4', rssi: -58));
-        timer.cancel();
+    // Listen for incoming BLE devices
+    UniversalBle.onScanResult = (BleScanResult result) {
+      if (result.name != null && result.name!.isNotEmpty) {
+        // You can filter by: if (result.name!.startsWith('PP-Setup'))
+        final existingIndex = _scannedDevices.indexWhere((d) => d.id == result.deviceId);
+        
+        final device = DeviceModel(
+          id: result.deviceId,
+          name: result.name!,
+          mac: result.deviceId, // On Windows, deviceId is the MAC address
+          rssi: result.rssi ?? 0,
+        );
+
+        if (existingIndex >= 0) {
+          _scannedDevices[existingIndex] = device;
+        } else {
+          _scannedDevices.add(device);
+        }
+        _scanController.add(List.from(_scannedDevices));
       }
-      _scanController.add(List.from(_mockDevices));
-    });
+    };
+
+    // Begin hardware scan
+    await UniversalBle.startScan();
   }
 
   Future<void> stopScan() async {
-    _scanTimer?.cancel();
+    await UniversalBle.stopScan();
   }
 
   Future<bool> connect(String deviceId) async {
-    // Simulate connection delay
-    await Future.delayed(const Duration(milliseconds: 1500));
-    return true;
+    try {
+      await UniversalBle.connect(deviceId);
+      return true;
+    } catch (e) {
+      print('Connection failed: $e');
+      return false;
+    }
   }
 
   Future<void> provision(Map<String, dynamic> payload) async {
@@ -55,6 +71,6 @@ class BleService {
   void dispose() {
     _scanController.close();
     _statusController.close();
-    _scanTimer?.cancel();
+    UniversalBle.stopScan();
   }
 }
