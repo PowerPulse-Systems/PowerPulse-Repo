@@ -7,10 +7,8 @@ import Home from './pages/Home/Home';
 import Login from './pages/Login/Login';
 import Signup from './pages/Signup/Signup';
 import Dashboard from './pages/Dashboard/Dashboard';
-import DeviceSetup from './pages/DeviceSetup/DeviceSetup';
-import BreakerAssign from './pages/BreakerAssign/BreakerAssign';
-import SwitchNodePairing from './pages/SwitchNodePairing/SwitchNodePairing';
-import SensorNodePairing from './pages/SensorNodePairing/SensorNodePairing';
+import DevicesList from './pages/Devices/DevicesList';
+import DeviceSettings from './pages/Devices/DeviceSettings';
 import Analytics from './pages/Analytics/Analytics';
 import Alerts from './pages/Alerts/Alerts';
 import Settings from './pages/Settings/Settings';
@@ -39,35 +37,19 @@ const App: React.FC = () => {
           } 
         />
         <Route 
-          path='/setup' 
+          path='/devices' 
           element={
             <DashboardLayout>
-              <DeviceSetup />
+              <DevicesList />
             </DashboardLayout>
           } 
         />
         <Route 
-          path='/breakers' 
+          path='/devices/:id' 
           element={
             <DashboardLayout>
-              <BreakerAssign />
+              <DeviceSettings />
             </DashboardLayout>
-          } 
-        />
-        <Route 
-          path='/pairing/switch' 
-          element={
-             <DashboardLayout>
-               <SwitchNodePairing />
-             </DashboardLayout>
-          } 
-        />
-        <Route 
-          path='/pairing/sensor' 
-          element={
-             <DashboardLayout>
-               <SensorNodePairing />
-             </DashboardLayout>
           } 
         />
         <Route 
