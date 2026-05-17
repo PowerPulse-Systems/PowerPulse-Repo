@@ -16,7 +16,7 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="w-64 h-screen flex flex-col transition-colors bg-white border-r border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300">
       <div className="p-6 text-2xl font-bold text-blue-600 dark:text-blue-500 border-b border-slate-200 dark:border-slate-800">
-        SmartEMS
+        PowerPulse
       </div>
       <nav className="flex-1 overflow-y-auto py-4">
         <ul className="space-y-1">

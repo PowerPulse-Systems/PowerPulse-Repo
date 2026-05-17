@@ -4,6 +4,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { devicesApi } from '../../services/api';
 import { useEffect } from 'react';
+import AddDeviceModal from '../ui/AddDeviceModal';
+import { useDashboardStore } from '../../store/useDashboardStore';
 
 const Topbar: React.FC = () => {
   const navigate = useNavigate();
@@ -13,14 +15,18 @@ const Topbar: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
   const [devices, setDevices] = useState<any[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
+  
+  const { activeDeviceId, setActiveDevice } = useDashboardStore();
+  const selectedDevice = devices.find(d => d.id === activeDeviceId);
+
+  const [addDeviceModalOpen, setAddDeviceModalOpen] = useState(false);
 
   useEffect(() => {
     if (token) {
       devicesApi.getMyDevices().then((res) => {
         setDevices(res.data);
-        if (res.data.length > 0) {
-          setSelectedDevice(res.data[0]);
+        if (res.data.length > 0 && !activeDeviceId) {
+          setActiveDevice(res.data[0].id);
         }
       }).catch(err => console.error("Failed to load devices", err));
     }
@@ -28,10 +34,7 @@ const Topbar: React.FC = () => {
 
   const handleAddDevice = () => {
     setDevicesOpen(false);
-    if (token) {
-      // Launch Electron app via protocol handler
-      window.location.href = `powerpulse://setup-device?token=${token}`;
-    }
+    setAddDeviceModalOpen(true);
   };
 
   const notifications = [
@@ -110,7 +113,7 @@ const Topbar: React.FC = () => {
                     <button
                       key={device.id}
                       onClick={() => {
-                        setSelectedDevice(device);
+                        setActiveDevice(device.id);
                         setDevicesOpen(false);
                       }}
                       className={`w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition ${
@@ -240,6 +243,11 @@ const Topbar: React.FC = () => {
           ) : null}
         </div>
       </div>
+      <AddDeviceModal 
+        isOpen={addDeviceModalOpen} 
+        onClose={() => setAddDeviceModalOpen(false)} 
+        token={token}
+      />
     </header>
   );
 };

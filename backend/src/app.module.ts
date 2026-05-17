@@ -9,6 +9,8 @@ import { AuthModule } from './auth/auth.module';
 import { MqttModule } from './mqtt/mqtt.module';
 import { TelemetryModule } from './telemetry/telemetry.module';
 import { EnergyModule } from './energy/energy.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { WidgetsModule } from './widgets/widgets.module';
 
 @Module({
   imports: [
@@ -22,6 +24,8 @@ import { EnergyModule } from './energy/energy.module';
     MqttModule,
     TelemetryModule,
     EnergyModule,
+    DashboardModule,
+    WidgetsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

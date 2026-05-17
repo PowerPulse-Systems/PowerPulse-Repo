@@ -11,7 +11,7 @@ export class DevicesService {
    * Register a new device (called during provisioning).
    * If the device already exists (by MAC), return the existing record.
    */
-  async register(macAddress: string, type: string, firmwareVersion?: string) {
+  async register(macAddress: string, type: string, name?: string, firmwareVersion?: string) {
     const existing = await this.prisma.device.findUnique({
       where: { macAddress },
     });
@@ -25,6 +25,7 @@ export class DevicesService {
       data: {
         macAddress,
         type,
+        name,
         firmwareVersion: firmwareVersion || null,
       },
     });

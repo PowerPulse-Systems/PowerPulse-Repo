@@ -12,8 +12,8 @@ export class DevicesController {
    * POST /devices/register
    */
   @Post('register')
-  register(@Body() dto: { macAddress: string; type: string; firmwareVersion?: string }) {
-    return this.devicesService.register(dto.macAddress, dto.type, dto.firmwareVersion);
+  register(@Body() dto: { macAddress: string; type: string; name?: string; firmwareVersion?: string }) {
+    return this.devicesService.register(dto.macAddress, dto.type, dto.name, dto.firmwareVersion);
   }
 
   /**

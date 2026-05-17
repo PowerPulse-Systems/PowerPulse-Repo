@@ -7,16 +7,26 @@ import 'dart:async';
 
 class ProvisioningPage extends StatefulWidget {
   final DeviceModel device;
+  final String deviceName;
   final String ssid;
   final String password;
+  final String mqttHost;
+  final int mqttPort;
+  final String mqttUser;
+  final String mqttPass;
   final VoidCallback onComplete;
   final VoidCallback onError;
 
   const ProvisioningPage({
     super.key,
     required this.device,
+    required this.deviceName,
     required this.ssid,
     required this.password,
+    required this.mqttHost,
+    required this.mqttPort,
+    required this.mqttUser,
+    required this.mqttPass,
     required this.onComplete,
     required this.onError,
   });
@@ -74,6 +84,10 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
         'wifi_password': widget.password,
         'backend_url': backendUrl,
         'device_id': widget.device.id,
+        'mqtt_host': widget.mqttHost,
+        'mqtt_port': widget.mqttPort,
+        'mqtt_username': widget.mqttUser,
+        'mqtt_password': widget.mqttPass,
       };
 
       _statusSub = state.ble.statusUpdates.listen((status) {
@@ -92,7 +106,7 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
 
       // Register step
       _updateStep(3, 'active');
-      final dbDeviceId = await state.api.registerDevice(widget.device.mac);
+      final dbDeviceId = await state.api.registerDevice(widget.device.mac, name: widget.deviceName);
       if (dbDeviceId == null) throw Exception('Registration failed');
       _updateStep(3, 'done');
 

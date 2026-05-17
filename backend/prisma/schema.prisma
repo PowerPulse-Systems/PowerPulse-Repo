@@ -35,12 +35,14 @@ model Device {
   id              String    @id @default(uuid())
   macAddress      String    @unique
   type            String    // Main board, Sensor node, Switch node
+  name            String?
   firmwareVersion String?
   onlineStatus    Boolean   @default(false)
   lastSeen        DateTime?
   userId          String?
   user            User?     @relation(fields: [userId], references: [id])
   breakers        Breaker[]
+  dashboard       Dashboard?
   createdAt       DateTime  @default(now())
 }
 
@@ -80,4 +82,33 @@ model AutomationRule {
   condition String
   action    String
   enabled   Boolean @default(true)
+}
+
+model Dashboard {
+  id        String   @id @default(uuid())
+  deviceId  String   @unique
+  device    Device   @relation(fields: [deviceId], references: [id])
+  widgets   Widget[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Widget {
+  id          String   @id @default(uuid())
+  dashboardId String
+  dashboard   Dashboard @relation(fields: [dashboardId], references: [id], onDelete: Cascade)
+  type        String   // "card" initially, future: "graph", "alerts"
+  title       String
+  metric      String   // "energy_usage", "current_load", "power", "voltage"
+  breakers    String[] // array of breaker IDs
+  aggregation String   @default("sum") // "sum", future: "average", "max", "min"
+  timePreset  String?  // "today", "last_24_hours", "this_week", "this_month", "this_year"
+  customHours Int?     // for custom duration
+  customStart DateTime? // for custom range
+  customEnd   DateTime? // for custom range
+  size        String   @default("small") // "small", "medium", "large"
+  position    Int      @default(0)
+  config      Json?    // extensible config for future widget types
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

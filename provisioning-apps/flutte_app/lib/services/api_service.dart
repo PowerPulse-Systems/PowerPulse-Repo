@@ -28,7 +28,7 @@ class ApiService {
     }
   }
 
-  Future<String?> registerDevice(String macAddress) async {
+  Future<String?> registerDevice(String macAddress, {String? name}) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
@@ -42,6 +42,7 @@ class ApiService {
         body: jsonEncode({
           'macAddress': macAddress,
           'type': 'breaker-node',
+          'name': name,
           'firmwareVersion': '1.0.0'
         }),
       );

@@ -22,6 +22,11 @@ class AppState extends ChangeNotifier {
   DeviceModel? selectedDevice;
   String wifiSsid = '';
   String wifiPassword = '';
+  String deviceName = '';
+  String mqttHost = '';
+  int mqttPort = 1883;
+  String mqttUser = '';
+  String mqttPass = '';
 
   void setAuth(String newToken) {
     token = newToken;
@@ -33,9 +38,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setWifi(String ssid, String pass) {
+  void setConfig(String name, String ssid, String pass, String mHost, int mPort, String mUser, String mPass) {
+    deviceName = name;
     wifiSsid = ssid;
     wifiPassword = pass;
+    mqttHost = mHost;
+    mqttPort = mPort;
+    mqttUser = mUser;
+    mqttPass = mPass;
     notifyListeners();
   }
 
@@ -43,6 +53,11 @@ class AppState extends ChangeNotifier {
     selectedDevice = null;
     wifiSsid = '';
     wifiPassword = '';
+    deviceName = '';
+    mqttHost = '';
+    mqttPort = 1883;
+    mqttUser = '';
+    mqttPass = '';
     notifyListeners();
   }
 
@@ -165,8 +180,8 @@ class _MainContainerState extends State<MainContainer> {
       case 2:
         activePage = ConfigurePage(
           device: state.selectedDevice!,
-          onSubmit: (ssid, pass) {
-            state.setWifi(ssid, pass);
+          onSubmit: (name, ssid, pass, host, port, user, mqttPass) {
+            state.setConfig(name, ssid, pass, host, port, user, mqttPass);
             _navigateTo(3);
           },
           onBack: () => _navigateTo(1),
@@ -175,8 +190,13 @@ class _MainContainerState extends State<MainContainer> {
       case 3:
         activePage = ProvisioningPage(
           device: state.selectedDevice!,
+          deviceName: state.deviceName,
           ssid: state.wifiSsid,
           password: state.wifiPassword,
+          mqttHost: state.mqttHost,
+          mqttPort: state.mqttPort,
+          mqttUser: state.mqttUser,
+          mqttPass: state.mqttPass,
           onComplete: () => _navigateTo(4),
           onError: () {
             state.reset();

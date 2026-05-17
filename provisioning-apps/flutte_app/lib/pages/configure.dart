@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/device.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ConfigurePage extends StatefulWidget {
   final DeviceModel device;
-  final Function(String ssid, String password) onSubmit;
+  final Function(String name, String ssid, String password, String mqttHost, int mqttPort, String mqttUser, String mqttPass) onSubmit;
   final VoidCallback onBack;
 
   const ConfigurePage({
@@ -18,14 +20,39 @@ class ConfigurePage extends StatefulWidget {
 }
 
 class _ConfigurePageState extends State<ConfigurePage> {
+  final _nameController = TextEditingController();
   final _ssidController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _mqttHostController = TextEditingController();
+  final _mqttPortController = TextEditingController();
+  final _mqttUserController = TextEditingController();
+  final _mqttPassController = TextEditingController();
+  
   bool _showPassword = false;
+  bool _showMqtt = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Default device name to something sensible
+    _nameController.text = '${widget.device.name} Device';
+    
+    // Pre-fill MQTT settings from .env
+    _mqttHostController.text = dotenv.env['MQTT_HOST'] ?? '';
+    _mqttPortController.text = dotenv.env['MQTT_PORT'] ?? '1883';
+    _mqttUserController.text = dotenv.env['MQTT_USERNAME'] ?? '';
+    _mqttPassController.text = dotenv.env['MQTT_PASSWORD'] ?? '';
+  }
 
   @override
   void dispose() {
+    _nameController.dispose();
     _ssidController.dispose();
     _passwordController.dispose();
+    _mqttHostController.dispose();
+    _mqttPortController.dispose();
+    _mqttUserController.dispose();
+    _mqttPassController.dispose();
     super.dispose();
   }
 
@@ -86,6 +113,24 @@ class _ConfigurePageState extends State<ConfigurePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const Text('Device Identity', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    const Text('Device Name', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 4),
+                    const Text("e.g. 'Building A Main Board', 'Lab 3 Panel', or 'Ground Floor DB'", style: TextStyle(color: Color(0xFF64748B), fontSize: 12)),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _nameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: _inputDecoration('Memorable name for this device'),
+                      onChanged: (v) => setState(() {}),
+                    ),
+                    const SizedBox(height: 24),
+                    const Divider(color: Color(0xFF1E293B)),
+                    const SizedBox(height: 24),
+
+                    const Text('WiFi Configuration', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
                     const Text('WiFi SSID', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500)),
                     const SizedBox(height: 8),
                     TextField(
@@ -110,6 +155,97 @@ class _ConfigurePageState extends State<ConfigurePage> {
                       ),
                     ),
                     const SizedBox(height: 24),
+                    const Divider(color: Color(0xFF1E293B)),
+                    const SizedBox(height: 8),
+
+                    InkWell(
+                      onTap: () => setState(() => _showMqtt = !_showMqtt),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Text(_showMqtt ? '▼ Advanced (MQTT)' : '▶ Advanced (MQTT)', style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500)),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    if (_showMqtt) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('MQTT Host', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _mqttHostController,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: _inputDecoration('broker.hivemq.com'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            flex: 1,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Port', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _mqttPortController,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: _inputDecoration('1883'),
+                                  keyboardType: TextInputType.number,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Username (Optional)', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _mqttUserController,
+                                  style: const TextStyle(color: Colors.white),
+                                  decoration: _inputDecoration('user'),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Password (Optional)', style: TextStyle(color: Color(0xFF94A3B8), fontSize: 14, fontWeight: FontWeight.w500)),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _mqttPassController,
+                                  style: const TextStyle(color: Colors.white),
+                                  obscureText: true,
+                                  decoration: _inputDecoration('••••••••'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    
+                    const SizedBox(height: 32),
 
                     Row(
                       children: [
@@ -128,7 +264,15 @@ class _ConfigurePageState extends State<ConfigurePage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _ssidController.text.isNotEmpty ? () => widget.onSubmit(_ssidController.text, _passwordController.text) : null,
+                            onPressed: (_ssidController.text.isNotEmpty && _nameController.text.isNotEmpty) ? () => widget.onSubmit(
+                              _nameController.text,
+                              _ssidController.text, 
+                              _passwordController.text,
+                              _mqttHostController.text,
+                              int.tryParse(_mqttPortController.text) ?? 1883,
+                              _mqttUserController.text,
+                              _mqttPassController.text
+                            ) : null,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),
                               foregroundColor: Colors.white,
