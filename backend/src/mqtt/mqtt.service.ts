@@ -83,7 +83,7 @@ export class MqttService implements OnModuleInit {
 
     this.client.on('error', (err) => {
       if (!hasLoggedError) {
-        this.logger.error('❌ CRITICAL: MQTT Connection failed. Please check if your broker is running. Suppressing further error logs until reconnected.');
+        this.logger.error('❌ CRITICAL: MQTT Connection failed. Suppressing further error logs until reconnected.', err);
         hasLoggedError = true;
       }
     });

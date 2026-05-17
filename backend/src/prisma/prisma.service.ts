@@ -34,7 +34,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       await this.$connect();
       this.logger.log('✅ Database is up and running');
     } catch (error) {
-      this.logger.error('❌ CRITICAL: Database connection failed. Please ensure your database is running.');
+      this.logger.error('❌ CRITICAL: Database connection failed. Please ensure your database is running.', error);
       // Exit process to prevent running backend without a DB, and avoid exposing sensitive stack traces
       process.exit(1); 
     }
