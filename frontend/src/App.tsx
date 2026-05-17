@@ -22,7 +22,7 @@ import './App.css';
 
 const App: React.FC = () => {
   return (
-    <Router>
+    <Router basename="/PowerPulse-Repo">
       <Routes>
         {/* Public Routes */}
         <Route path='/' element={<Home />} />
