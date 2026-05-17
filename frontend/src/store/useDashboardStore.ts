@@ -19,9 +19,9 @@ interface DashboardState {
   
   // Widget actions
   addWidget: (widget: Widget) => void;
-  updateWidget: (index: number, updates: Partial<Widget>) => void;
-  removeWidget: (index: number) => void;
-  reorderWidgets: (newLayout: any[]) => void;
+  updateWidget: (id: string, updates: Partial<Widget>) => void;
+  removeWidget: (id: string) => void;
+  reorderWidgets: (oldIndex: number, newIndex: number) => void;
 }
 
 export const useDashboardStore = create<DashboardState>((set, get) => ({
@@ -41,9 +41,10 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const res = await api.get(`/dashboard/${deviceId}`);
+      const widgetsWithIds = res.data.widgets.map((w: any) => ({ ...w, id: w.id || `temp-${Math.random()}` }));
       set({ 
-        dashboard: res.data,
-        draftWidgets: JSON.parse(JSON.stringify(res.data.widgets)), // Deep copy
+        dashboard: { ...res.data, widgets: widgetsWithIds },
+        draftWidgets: JSON.parse(JSON.stringify(widgetsWithIds)), // Deep copy
         isLoading: false 
       });
     } catch (error: any) {
@@ -64,11 +65,20 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
   saveDashboard: async (deviceId: string) => {
     const { draftWidgets } = get();
     set({ isLoading: true });
+    
+    // Assign position based on current array order
+    const widgetsToSave = draftWidgets.map((w, index) => ({
+      ...w,
+      position: index
+    }));
+
     try {
-      const res = await api.post(`/dashboard/${deviceId}`, { widgets: draftWidgets });
+      const res = await api.post(`/dashboard/${deviceId}`, { widgets: widgetsToSave });
+      const widgetsWithIds = res.data.widgets.map((w: any) => ({ ...w, id: w.id || `temp-${Math.random()}` }));
+      
       set({ 
-        dashboard: res.data,
-        draftWidgets: JSON.parse(JSON.stringify(res.data.widgets)),
+        dashboard: { ...res.data, widgets: widgetsWithIds },
+        draftWidgets: JSON.parse(JSON.stringify(widgetsWithIds)),
         isEditMode: false,
         isLoading: false 
       });
@@ -87,50 +97,34 @@ export const useDashboardStore = create<DashboardState>((set, get) => ({
 
   addWidget: (widget: Widget) => {
     const { draftWidgets } = get();
-    set({ draftWidgets: [...draftWidgets, { ...widget, position: draftWidgets.length }] });
+    const newWidget = { 
+      ...widget, 
+      id: widget.id || `temp-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      position: draftWidgets.length 
+    };
+    set({ draftWidgets: [...draftWidgets, newWidget] });
   },
 
-  updateWidget: (index: number, updates: Partial<Widget>) => {
+  updateWidget: (id: string, updates: Partial<Widget>) => {
+    const { draftWidgets } = get();
+    set({ 
+      draftWidgets: draftWidgets.map(w => w.id === id ? { ...w, ...updates } : w)
+    });
+  },
+
+  removeWidget: (id: string) => {
+    const { draftWidgets } = get();
+    set({ draftWidgets: draftWidgets.filter(w => w.id !== id) });
+  },
+
+  reorderWidgets: (oldIndex: number, newIndex: number) => {
     const { draftWidgets } = get();
     const newWidgets = [...draftWidgets];
-    newWidgets[index] = { ...newWidgets[index], ...updates };
-    set({ draftWidgets: newWidgets });
-  },
-
-  removeWidget: (index: number) => {
-    const { draftWidgets } = get();
-    const newWidgets = draftWidgets.filter((_, i) => i !== index);
+    const [movedItem] = newWidgets.splice(oldIndex, 1);
+    newWidgets.splice(newIndex, 0, movedItem);
+    
     // Update positions
     newWidgets.forEach((w, i) => w.position = i);
     set({ draftWidgets: newWidgets });
-  },
-
-  reorderWidgets: (newLayout: any[]) => {
-    const { draftWidgets } = get();
-    // Sort draftWidgets based on the new layout positions
-    const newWidgets = [...draftWidgets];
-    newLayout.forEach((layoutItem) => {
-      const widgetIndex = parseInt(layoutItem.i);
-      if (!isNaN(widgetIndex) && newWidgets[widgetIndex]) {
-        // Find position based on y and x (row-major order)
-        // Note: react-grid-layout handles actual visual positioning, we just store order
-      }
-    });
-    
-    // For simplicity in a 1D array, just re-sort based on Y then X
-    newLayout.sort((a, b) => {
-      if (a.y === b.y) return a.x - b.x;
-      return a.y - b.y;
-    });
-
-    const reorderedWidgets = newLayout.map((layoutItem) => {
-      const index = parseInt(layoutItem.i);
-      return draftWidgets[index];
-    }).filter(Boolean);
-
-    // Update positions
-    reorderedWidgets.forEach((w, i) => w.position = i);
-
-    set({ draftWidgets: reorderedWidgets });
   }
 }));

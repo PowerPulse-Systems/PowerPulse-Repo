@@ -101,9 +101,9 @@ const WidgetConfigModal: React.FC<WidgetConfigModalProps> = ({
                 onChange={(e) => setSize(e.target.value as WidgetSize)}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="small">Small (1x1)</option>
-                <option value="medium">Medium (2x1)</option>
-                <option value="large">Large (2x2)</option>
+                <option value="small">Small (1/3 Width)</option>
+                <option value="medium">Medium (2/3 Width)</option>
+                <option value="large">Large (Full Width)</option>
               </select>
             </div>
             <div>

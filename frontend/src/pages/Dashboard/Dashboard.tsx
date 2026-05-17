@@ -17,7 +17,7 @@ const Dashboard: React.FC = () => {
   } = useDashboardStore();
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingWidget, setEditingWidget] = useState<{ widget: Widget; index: number } | undefined>();
+  const [editingWidget, setEditingWidget] = useState<{ widget: Widget; id: string } | undefined>();
 
   const handleAddWidget = (widget: Widget) => {
     addWidget(widget);
@@ -25,7 +25,7 @@ const Dashboard: React.FC = () => {
 
   const handleUpdateWidget = (widget: Widget) => {
     if (editingWidget !== undefined) {
-      updateWidget(editingWidget.index, widget);
+      updateWidget(editingWidget.id, widget);
     }
   };
 
@@ -34,8 +34,8 @@ const Dashboard: React.FC = () => {
     setModalOpen(true);
   };
 
-  const openEditModal = (widget: Widget, index: number) => {
-    setEditingWidget({ widget, index });
+  const openEditModal = (widget: Widget, id: string) => {
+    setEditingWidget({ widget, id });
     setModalOpen(true);
   };
 
