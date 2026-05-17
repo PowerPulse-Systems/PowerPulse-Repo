@@ -38,6 +38,7 @@ dependencies:
   universal_ble: ^2.0.0
   http: ^1.6.0
   shared_preferences: ^2.5.5
+  app_links: ^7.0.0
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +50,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  msix: ^3.16.13
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -91,3 +93,10 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+msix_config:
+  display_name: PowerPulse Setup
+  publisher_display_name: PowerPulse
+  identity_name: PowerPulse.Setup
+  msix_version: 1.0.0.0
+  protocol_activation: powerpulse

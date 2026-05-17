@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
 import 'services/api_service.dart';
 import 'services/ble_service.dart';
 import 'models/device.dart';
@@ -91,6 +93,50 @@ class MainContainer extends StatefulWidget {
 
 class _MainContainerState extends State<MainContainer> {
   int _currentIndex = 0; // 0: Welcome, 1: Scan, 2: Configure, 3: Provisioning, 4: Success
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  Future<void> _initDeepLinks() async {
+    _appLinks = AppLinks();
+    
+    // Check initial link if app was cold-started by a link
+    try {
+      final initialUri = await _appLinks.getInitialLink();
+      if (initialUri != null) {
+        _handleDeepLink(initialUri);
+      }
+    } catch (e) {
+      print('Failed to get initial link: $e');
+    }
+
+    // Listen for incoming links while app is running
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    // Expected link: powerpulse://add-device?token=...
+    if (uri.scheme == 'powerpulse' && uri.host == 'add-device') {
+      final token = uri.queryParameters['token'];
+      if (token != null && mounted) {
+        context.read<AppState>().setAuth(token);
+        _navigateTo(1); // Jump directly to the Scan page
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
 
   void _navigateTo(int index) {
     setState(() {

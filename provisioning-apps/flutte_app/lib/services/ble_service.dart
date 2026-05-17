@@ -18,7 +18,7 @@ class BleService {
     _scanController.add(_scannedDevices);
 
     // Listen for incoming BLE devices
-    UniversalBle.onScanResult = (BleScanResult result) {
+    UniversalBle.onScanResult = (BleDevice result) {
       if (result.name != null && result.name!.isNotEmpty) {
         // You can filter by: if (result.name!.startsWith('PP-Setup'))
         final existingIndex = _scannedDevices.indexWhere((d) => d.id == result.deviceId);
