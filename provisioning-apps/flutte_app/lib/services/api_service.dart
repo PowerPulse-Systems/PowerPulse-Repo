@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  // Use 10.0.2.2 for Android emulator to access localhost, otherwise localhost
-  static const String baseUrl = 'http://localhost:3000';
+  // Use .env for the backend URL
+  static String get baseUrl => dotenv.env['API_URL'] ?? 'http://localhost:3000';
 
   Future<Map<String, dynamic>?> login(String email, String password) async {
     try {

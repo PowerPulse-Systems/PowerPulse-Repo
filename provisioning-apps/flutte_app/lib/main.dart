@@ -6,6 +6,7 @@ import 'services/api_service.dart';
 import 'services/ble_service.dart';
 import 'models/device.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'pages/welcome.dart';
 import 'pages/scan.dart';
 import 'pages/configure.dart';
@@ -51,7 +52,8 @@ class AppState extends ChangeNotifier {
   }
 }
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(
     ChangeNotifierProvider(
       create: (context) => AppState(),

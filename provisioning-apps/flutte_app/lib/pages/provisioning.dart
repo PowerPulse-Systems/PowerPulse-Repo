@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../main.dart';
 import '../models/device.dart';
 import 'dart:async';
@@ -67,10 +68,11 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
     try {
       _updateStep(0, 'active');
       
+      final backendUrl = dotenv.env['API_URL'] ?? 'http://localhost:3000';
       final payload = {
         'wifi_ssid': widget.ssid,
         'wifi_password': widget.password,
-        'backend_url': 'http://localhost:3000',
+        'backend_url': backendUrl,
         'device_id': widget.device.id,
       };
 
