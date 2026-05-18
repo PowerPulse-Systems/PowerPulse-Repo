@@ -17,6 +17,8 @@
  */
 
 #include <Arduino.h>
+#include "soc/soc.h"             // Required for brownout disabling
+#include "soc/rtc_cntl_reg.h"    // Required for brownout disabling
 #include "config.h"
 #include "nvs_config.h"
 #include "led_status.h"
@@ -212,12 +214,16 @@ void connectWithStoredConfig() {
 // Arduino Setup
 // ========================
 void setup() {
+  // Disable the brownout detector to prevent resets on weak USB power lines
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); 
+  
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n========================================");
   Serial.println("  PowerPulse ESP32 — Provisioning FW");
   Serial.println("  Two-Phase Commit Architecture");
   Serial.println("========================================");
+  Serial.println("[Main] Brownout detector disabled for dev stability.");
 
   LedStatus::init();
   NvsConfig::init();
