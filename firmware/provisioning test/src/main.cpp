@@ -7,9 +7,13 @@
  *   3. If provisioned → connect WiFi → connect MQTT → normal operation
  *   4. If not provisioned → start BLE server, wait for provisioning
  * 
+ * Provisioning flow (two-phase commit):
+ *   Phase 1: Receive credentials via BLE → test WiFi → test MQTT → report to app
+ *   Phase 2: Wait for COMMIT (save to NVS) or ROLLBACK (discard and restart BLE)
+ * 
  * Recovery:
  *   - If WiFi fails 5 times consecutively → re-enter BLE provisioning mode
- *   - Physical button hold (5s) → factory reset at any time during boot
+ *   - Physical button hold (5s) → factory reset at any time
  */
 
 #include <Arduino.h>
@@ -25,11 +29,12 @@
 // ========================
 enum class DeviceState {
   BOOT,
-  PROVISIONING,     // BLE advertising, waiting for config
+  PROVISIONING,       // BLE advertising, waiting for config
   WIFI_CONNECTING,
   MQTT_CONNECTING,
-  NORMAL,           // Fully connected, operational
-  RECOVERY          // WiFi/MQTT failed, re-entering provisioning
+  AWAITING_COMMIT,    // WiFi+MQTT connected, waiting for app to send COMMIT or ROLLBACK
+  NORMAL,             // Fully connected, operational
+  RECOVERY            // WiFi/MQTT failed, re-entering provisioning
 };
 
 static DeviceState currentState = DeviceState::BOOT;
@@ -37,7 +42,18 @@ static int wifiFailCount = 0;
 static bool provisioningInProgress = false;
 
 // ========================
-// Provisioning Callback
+// Provisioning data (held in RAM until COMMIT)
+// ========================
+static String provSsid, provPass, provBackendUrl, provDeviceId, provMqttHost, provMqttUser, provMqttPass;
+static uint16_t provMqttPort;
+static bool startProvisioningProcess = false;
+
+// These flags are set by BLE callbacks in ble_provisioning.cpp
+extern volatile bool commitRequested;
+extern volatile bool rollbackRequested;
+
+// ========================
+// Provisioning Callback (BLE → RAM only)
 // ========================
 void onProvisioningData(
   const char* wifiSsid, const char* wifiPass,
@@ -45,54 +61,56 @@ void onProvisioningData(
   const char* mqttHost, uint16_t mqttPort,
   const char* mqttUser, const char* mqttPass
 ) {
-  Serial.println("[Main] Provisioning data received!");
+  Serial.println("[Main] Provisioning data received from BLE callback!");
   provisioningInProgress = true;
 
-  // Store to NVS
-  NvsConfig::store(wifiSsid, wifiPass, backendUrl, deviceId, mqttHost, mqttPort, mqttUser, mqttPass);
+  // Store data in RAM only — NOT to NVS yet
+  provSsid = wifiSsid;
+  provPass = wifiPass;
+  provBackendUrl = backendUrl;
+  provDeviceId = deviceId;
+  provMqttHost = mqttHost;
+  provMqttPort = mqttPort;
+  provMqttUser = mqttUser;
+  provMqttPass = mqttPass;
 
-  // Attempt WiFi connection
-  BleProvisioning::sendStatus("WIFI_CONNECTING");
-  LedStatus::wifiConnecting();
+  // Send acknowledgment and set flag for loop() to process
+  BleProvisioning::sendStatus("RECEIVED");
+  startProvisioningProcess = true;
+}
 
-  if (WifiManager::connect(wifiSsid, wifiPass)) {
-    BleProvisioning::sendStatus("WIFI_CONNECTED");
-    
-    // Attempt MQTT connection
-    BleProvisioning::sendStatus("MQTT_CONNECTING");
-    LedStatus::mqttConnecting();
-
-    String clientId = "pp-" + WifiManager::getMacSuffix();
-    if (MqttClient::connect(mqttHost, mqttPort, mqttUser, mqttPass, clientId.c_str())) {
-      BleProvisioning::sendStatus("MQTT_CONNECTED");
-
-      // Publish provisioning acknowledgment
-      String mac = WifiManager::getMacAddress();
-      mac.replace(":", "");
-      MqttClient::publishProvisioningAck(mac.c_str());
-      MqttClient::publishStatus(mac.c_str(), true);
-
-      BleProvisioning::sendStatus("PROVISIONED");
-      
-      // Wait a moment for status to be sent, then stop BLE
-      delay(2000);
-      BleProvisioning::stop();
-      
-      currentState = DeviceState::NORMAL;
-      LedStatus::normalOperation();
-      Serial.println("[Main] Provisioning complete! Entering normal mode.");
-    } else {
-      BleProvisioning::sendStatus("MQTT_FAILED");
-      LedStatus::errorMode();
-      Serial.println("[Main] MQTT connection failed");
-      provisioningInProgress = false;
-    }
-  } else {
-    BleProvisioning::sendStatus("WIFI_FAILED");
-    LedStatus::errorMode();
-    Serial.println("[Main] WiFi connection failed");
-    provisioningInProgress = false;
-  }
+// ========================
+// Discard temp credentials and return to BLE provisioning
+// ========================
+void rollbackProvisioning() {
+  Serial.println("[Main] ROLLBACK — discarding temporary credentials");
+  
+  // Disconnect WiFi and MQTT if connected
+  MqttClient::disconnect();
+  WifiManager::disconnect();
+  
+  // Clear RAM data
+  provSsid = "";
+  provPass = "";
+  provBackendUrl = "";
+  provDeviceId = "";
+  provMqttHost = "";
+  provMqttPort = 0;
+  provMqttUser = "";
+  provMqttPass = "";
+  
+  provisioningInProgress = false;
+  startProvisioningProcess = false;
+  commitRequested = false;
+  rollbackRequested = false;
+  
+  // Notify app
+  BleProvisioning::sendStatus("ROLLBACK_OK");
+  
+  // Return to provisioning mode (BLE is still running)
+  currentState = DeviceState::PROVISIONING;
+  LedStatus::provisioningMode();
+  Serial.println("[Main] Ready for new provisioning attempt");
 }
 
 // ========================
@@ -134,7 +152,7 @@ void enterProvisioningMode() {
 }
 
 // ========================
-// Connect with stored config
+// Connect with stored config (after NVS save, on reboot)
 // ========================
 void connectWithStoredConfig() {
   // WiFi
@@ -198,6 +216,7 @@ void setup() {
   delay(1000);
   Serial.println("\n========================================");
   Serial.println("  PowerPulse ESP32 — Provisioning FW");
+  Serial.println("  Two-Phase Commit Architecture");
   Serial.println("========================================");
 
   LedStatus::init();
@@ -235,8 +254,84 @@ void loop() {
 
   switch (currentState) {
     case DeviceState::PROVISIONING:
-      // BLE server handles everything via callbacks
-      // Just keep LED updating
+      // Phase 1: Test connectivity with received credentials
+      if (startProvisioningProcess) {
+        startProvisioningProcess = false;
+        
+        // Do NOT store to NVS yet — just test the connections
+
+        // Step 1: Test WiFi
+        BleProvisioning::sendStatus("WIFI_CONNECTING");
+        LedStatus::wifiConnecting();
+
+        if (WifiManager::connect(provSsid.c_str(), provPass.c_str())) {
+          BleProvisioning::sendStatus("WIFI_CONNECTED");
+          Serial.println("[Main] WiFi test passed");
+          
+          // Step 2: Test MQTT
+          BleProvisioning::sendStatus("MQTT_CONNECTING");
+          LedStatus::mqttConnecting();
+
+          String clientId = "pp-" + WifiManager::getMacSuffix();
+          if (MqttClient::connect(provMqttHost.c_str(), provMqttPort, provMqttUser.c_str(), provMqttPass.c_str(), clientId.c_str())) {
+            BleProvisioning::sendStatus("MQTT_CONNECTED");
+            Serial.println("[Main] MQTT test passed");
+            
+            // All tests passed — enter AWAITING_COMMIT state
+            currentState = DeviceState::AWAITING_COMMIT;
+            Serial.println("[Main] WiFi + MQTT connected. Awaiting COMMIT or ROLLBACK from app...");
+          } else {
+            // MQTT failed — rollback everything
+            Serial.println("[Main] MQTT test FAILED");
+            BleProvisioning::sendStatus("MQTT_FAILED");
+            rollbackProvisioning();
+          }
+        } else {
+          // WiFi failed — rollback
+          Serial.println("[Main] WiFi test FAILED");
+          BleProvisioning::sendStatus("WIFI_FAILED");
+          rollbackProvisioning();
+        }
+      }
+      break;
+
+    case DeviceState::AWAITING_COMMIT:
+      // Phase 2: Wait for app to confirm or deny
+      if (commitRequested) {
+        commitRequested = false;
+        Serial.println("[Main] COMMIT received — saving credentials to NVS permanently");
+        
+        // Save to NVS now
+        NvsConfig::store(
+          provSsid.c_str(), provPass.c_str(),
+          provBackendUrl.c_str(), provDeviceId.c_str(),
+          provMqttHost.c_str(), provMqttPort,
+          provMqttUser.c_str(), provMqttPass.c_str()
+        );
+
+        // Publish provisioning acknowledgment via MQTT
+        String mac = WifiManager::getMacAddress();
+        mac.replace(":", "");
+        MqttClient::publishProvisioningAck(mac.c_str());
+        MqttClient::publishStatus(mac.c_str(), true);
+
+        BleProvisioning::sendStatus("PROVISIONED");
+        Serial.println("[Main] Provisioning complete! Device is now permanently configured.");
+        
+        // Wait for the status notification to be sent, then stop BLE
+        delay(2000);
+        BleProvisioning::stop();
+        
+        currentState = DeviceState::NORMAL;
+        LedStatus::normalOperation();
+        provisioningInProgress = false;
+      }
+      
+      if (rollbackRequested) {
+        rollbackRequested = false;
+        Serial.println("[Main] ROLLBACK received — backend rejected, discarding config");
+        rollbackProvisioning();
+      }
       break;
 
     case DeviceState::NORMAL:

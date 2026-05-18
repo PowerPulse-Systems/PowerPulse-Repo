@@ -133,4 +133,33 @@ export class DevicesService {
       return null;
     }
   }
+
+  /**
+   * Activate a device after provisioning is confirmed.
+   * Called by the Flutter app after the ESP sends PROVISIONED.
+   */
+  async activate(deviceId: string, userId: string) {
+    const device = await this.prisma.device.findUnique({
+      where: { id: deviceId },
+    });
+
+    if (!device) {
+      throw new NotFoundException(`Device ${deviceId} not found`);
+    }
+
+    if (device.userId && device.userId !== userId) {
+      throw new ConflictException('You do not own this device');
+    }
+
+    const updated = await this.prisma.device.update({
+      where: { id: deviceId },
+      data: {
+        onlineStatus: true,
+        lastSeen: new Date(),
+      },
+    });
+
+    this.logger.log(`Device ${deviceId} activated by user ${userId}`);
+    return updated;
+  }
 }

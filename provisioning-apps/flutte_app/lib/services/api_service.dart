@@ -74,4 +74,22 @@ class ApiService {
       return false;
     }
   }
+
+  Future<bool> activateDevice(String deviceId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/devices/$deviceId/activate'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+      return response.statusCode == 201 || response.statusCode == 200;
+    } catch (e) {
+      return false;
+    }
+  }
 }

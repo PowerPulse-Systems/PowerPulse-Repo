@@ -130,6 +130,28 @@ class BleService {
     }
   }
 
+  /// Send a plain-text command to the ESP (e.g. COMMIT or ROLLBACK)
+  Future<void> sendCommand(String command) async {
+    if (_connectedDeviceId == null) {
+      throw Exception('Not connected to a device');
+    }
+
+    try {
+      final data = Uint8List.fromList(utf8.encode(command));
+      await UniversalBle.writeValue(
+        _connectedDeviceId!,
+        provisionServiceUuid,
+        provisionWriteUuid,
+        data,
+        BleOutputProperty.withResponse
+      );
+      print('[BLE] Sent command: $command');
+    } catch (e) {
+      print('[BLE] Failed to send command $command: $e');
+      rethrow;
+    }
+  }
+
   void dispose() {
     _scanController.close();
     _statusController.close();

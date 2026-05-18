@@ -14,6 +14,10 @@ static BLECharacteristic* pInfoChar = nullptr;
 static bool clientConnected = false;
 static ProvisioningCallback onProvisioningReceived = nullptr;
 
+// Global command flags — read by main.cpp loop()
+volatile bool commitRequested = false;
+volatile bool rollbackRequested = false;
+
 // ========================
 // BLE Server Callbacks
 // ========================
@@ -38,14 +42,28 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* pCharacteristic) override {
     std::string rxValue = pCharacteristic->getValue();
     String value = rxValue.c_str();
+    value.trim();
     
     if (value.length() == 0) {
       Serial.println("[BLE] Empty write received");
       return;
     }
 
+    // ---- Check for plain-text commands first ----
+    if (value == "COMMIT") {
+      Serial.println("[BLE] COMMIT command received from app");
+      commitRequested = true;
+      return;
+    }
+    
+    if (value == "ROLLBACK") {
+      Serial.println("[BLE] ROLLBACK command received from app");
+      rollbackRequested = true;
+      return;
+    }
+
+    // ---- Otherwise, treat as JSON provisioning payload ----
     Serial.printf("[BLE] Received provisioning payload (%d bytes):\n", value.length());
-    Serial.println(value);
 
     // Parse JSON payload
     JsonDocument doc;
@@ -85,7 +103,7 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
 
     BleProvisioning::sendStatus("RECEIVED");
 
-    // Invoke the callback
+    // Invoke the callback (stores data in RAM, does NOT save to NVS)
     if (onProvisioningReceived) {
       onProvisioningReceived(wifiSsid, wifiPass, backendUrl, deviceId, mqttHost, mqttPort, mqttUser, mqttPass);
     }

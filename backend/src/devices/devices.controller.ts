@@ -51,4 +51,13 @@ export class DevicesController {
   reset(@Param('id') id: string, @Request() req: any) {
     return this.devicesService.reset(id, req.user.userId);
   }
+
+  /**
+   * Activate a device after successful provisioning.
+   * POST /devices/:id/activate
+   */
+  @Post(':id/activate')
+  activate(@Param('id') id: string, @Request() req: any) {
+    return this.devicesService.activate(id, req.user.userId);
+  }
 }
