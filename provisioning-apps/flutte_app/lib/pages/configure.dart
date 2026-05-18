@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/device.dart';
+import '../main.dart';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -283,6 +285,34 @@ class _ConfigurePageState extends State<ConfigurePage> {
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final ble = context.read<AppState>().ble;
+                        try {
+                          await ble.provision({
+                            'wifi_ssid': 'TEST_DEBUG_SSID',
+                            'wifi_password': 'TEST_PASSWORD',
+                            'backend_url': 'http://test.local',
+                            'device_id': 'test-1234',
+                            'mqtt_host': 'test.mosquitto.org',
+                            'mqtt_port': 1883,
+                            'mqtt_username': '',
+                            'mqtt_password': ''
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Test payload sent! Check ESP serial monitor.', style: TextStyle(color: Colors.white)), backgroundColor: Color(0xFF10B981)),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Failed to send test payload: $e', style: const TextStyle(color: Colors.white)), backgroundColor: const Color(0xFFEF4444)),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.bug_report, size: 16),
+                      label: const Text('Send Debug Test Payload'),
+                      style: TextButton.styleFrom(foregroundColor: const Color(0xFFFBBF24)), // Amber color for debug
                     )
                   ],
                 ),

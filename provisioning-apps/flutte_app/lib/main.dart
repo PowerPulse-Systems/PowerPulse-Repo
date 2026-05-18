@@ -13,7 +13,7 @@ import 'pages/configure.dart';
 import 'pages/provisioning.dart';
 import 'pages/success.dart';
 
-import 'package:universal_ble/universal_ble.dart';
+import 'package:universal_ble/universal_ble.dart' hide BleService;
 
 // App State to hold data passed between screens
 class AppState extends ChangeNotifier {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 import '../models/device.dart';
 import 'package:universal_ble/universal_ble.dart';
 
@@ -75,7 +76,7 @@ class BleService {
       await UniversalBle.discoverServices(deviceId);
       
       // Setup notification listener
-      UniversalBle.onValueChange = (String id, String characteristicId, Uint8List value) {
+      UniversalBle.onValueChange = (String id, String characteristicId, Uint8List value, int? transactionId) {
         if (characteristicId == provisionStatusUuid || characteristicId == provisionStatusUuid.toUpperCase()) {
           final status = utf8.decode(value);
           _statusController.add(status);
