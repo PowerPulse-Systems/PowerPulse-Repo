@@ -23,7 +23,7 @@ const Sidebar: React.FC = () => {
 
   return (
     <aside 
-      className={`${isCollapsed ? 'w-20' : 'w-64'} shrink-0 h-screen flex flex-col transition-all duration-300 bg-white border-r border-slate-200 text-slate-700 dark:bg-slate-900 dark:border-slate-800 dark:text-slate-300 relative`}
+      className={`${isCollapsed ? 'w-20' : 'w-64'} shrink-0 h-screen flex flex-col transition-all duration-300 bg-white border-r border-slate-200 text-slate-700 dark:bg-slate-950 dark:border-slate-800 dark:text-slate-300 relative`}
     >
       <div className={`p-6 flex items-center ${isCollapsed ? 'justify-center px-0' : 'justify-start'} text-2xl font-bold text-blue-600 dark:text-blue-500 border-b border-slate-200 dark:border-slate-800 h-20`}>
         {isCollapsed ? 'PP' : 'PowerPulse'}
@@ -31,7 +31,7 @@ const Sidebar: React.FC = () => {
       
       <button 
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-8 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full p-1 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm z-10 transition-colors"
+        className="absolute -right-3 top-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full p-1 text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm z-10 transition-colors"
       >
         {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
       </button>
@@ -46,8 +46,8 @@ const Sidebar: React.FC = () => {
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-3 text-sm font-medium rounded-xl transition-colors ${
                       isActive 
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-400' 
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100'
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400' 
+                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200'
                     } ${isCollapsed ? 'justify-center' : 'justify-start'}`
                   }
                   title={isCollapsed ? link.name : undefined}
