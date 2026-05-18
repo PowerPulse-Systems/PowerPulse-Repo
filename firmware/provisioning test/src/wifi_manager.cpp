@@ -3,7 +3,10 @@
 #include <WiFi.h>
 
 bool WifiManager::connect(const char* ssid, const char* password) {
-  Serial.printf("[WiFi] Connecting to '%s'...\n", ssid);
+  Serial.printf("[WiFi] Attempting to connect to SSID: '%s'\n", ssid);
+  
+  // Debug output length for password (avoid printing password)
+  Serial.printf("[WiFi] Password length: %d\n", strlen(password));
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -11,7 +14,7 @@ bool WifiManager::connect(const char* ssid, const char* password) {
   unsigned long startTime = millis();
   while (WiFi.status() != WL_CONNECTED) {
     if (millis() - startTime > WIFI_CONNECT_TIMEOUT_MS) {
-      Serial.println("[WiFi] Connection timed out");
+      Serial.printf("\n[WiFi] Connection timed out after %d ms. Current status: %d\n", WIFI_CONNECT_TIMEOUT_MS, WiFi.status());
       WiFi.disconnect();
       return false;
     }
@@ -19,7 +22,10 @@ bool WifiManager::connect(const char* ssid, const char* password) {
     Serial.print(".");
   }
 
-  Serial.printf("\n[WiFi] Connected! IP: %s\n", WiFi.localIP().toString().c_str());
+  Serial.printf("\n[WiFi] Successfully connected to %s!\n", ssid);
+  Serial.printf("[WiFi] Assigned IP Address: %s\n", WiFi.localIP().toString().c_str());
+  Serial.printf("[WiFi] Signal Strength (RSSI): %d dBm\n", WiFi.RSSI());
+  Serial.printf("[WiFi] MAC Address: %s\n", WiFi.macAddress().c_str());
   return true;
 }
 

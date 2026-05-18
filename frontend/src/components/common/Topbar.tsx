@@ -4,6 +4,8 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
 import { devicesApi } from '../../services/api';
 import { useEffect } from 'react';
+import AddDeviceModal from '../ui/AddDeviceModal';
+import { useDashboardStore } from '../../store/useDashboardStore';
 
 const Topbar: React.FC = () => {
   const navigate = useNavigate();
@@ -13,14 +15,18 @@ const Topbar: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [devicesOpen, setDevicesOpen] = useState(false);
   const [devices, setDevices] = useState<any[]>([]);
-  const [selectedDevice, setSelectedDevice] = useState<any | null>(null);
+  
+  const { activeDeviceId, setActiveDevice } = useDashboardStore();
+  const selectedDevice = devices.find(d => d.id === activeDeviceId);
+
+  const [addDeviceModalOpen, setAddDeviceModalOpen] = useState(false);
 
   useEffect(() => {
     if (token) {
       devicesApi.getMyDevices().then((res) => {
         setDevices(res.data);
-        if (res.data.length > 0) {
-          setSelectedDevice(res.data[0]);
+        if (res.data.length > 0 && !activeDeviceId) {
+          setActiveDevice(res.data[0].id);
         }
       }).catch(err => console.error("Failed to load devices", err));
     }
@@ -28,10 +34,7 @@ const Topbar: React.FC = () => {
 
   const handleAddDevice = () => {
     setDevicesOpen(false);
-    if (token) {
-      // Launch Electron app via protocol handler
-      window.location.href = `powerpulse://setup-device?token=${token}`;
-    }
+    setAddDeviceModalOpen(true);
   };
 
   const notifications = [
@@ -63,8 +66,10 @@ const Topbar: React.FC = () => {
     navigate('/login');
   };
 
+  const iconBtnClass = "relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900 transition-colors dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200";
+
   return (
-    <header className="relative z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/90 px-6 text-slate-700 backdrop-blur-xl dark:border-slate-800 dark:bg-slate-900/90 dark:text-slate-300 transition-colors duration-300">
+    <header className="relative z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/95 px-6 text-slate-700 backdrop-blur-md dark:border-slate-800 dark:bg-slate-950/90 dark:text-slate-200 transition-colors">
       <div className="flex items-center space-x-2 relative">
         {devices.length === 0 ? (
           <button 
@@ -82,7 +87,7 @@ const Topbar: React.FC = () => {
                   setNotificationsOpen(false);
                   setProfileOpen(false);
                 }}
-                className="flex items-center justify-between min-w-[220px] rounded-xl border border-slate-300 bg-slate-100 px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition-colors duration-300"
+                className="flex items-center justify-between min-w-[220px] rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/50 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
               >
                 <div className="flex items-center gap-2 truncate">
                   <span className={selectedDevice?.onlineStatus ? 'text-emerald-400 text-xs' : 'text-slate-400 text-xs'}>
@@ -95,7 +100,7 @@ const Topbar: React.FC = () => {
               
               <button 
                 onClick={handleAddDevice}
-                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-300 bg-slate-100 text-slate-600 transition hover:bg-slate-200 hover:text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                className="flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
                 aria-label="Add new device"
                 title="Add new device"
               >
@@ -104,13 +109,13 @@ const Topbar: React.FC = () => {
             </div>
 
             {devicesOpen && (
-              <div className="absolute left-0 top-12 w-[220px] overflow-hidden rounded-2xl border border-slate-300 bg-white/95 shadow-2xl shadow-slate-300/60 transition-colors duration-300 dark:border-slate-700 dark:bg-slate-950/95 dark:shadow-slate-950/60 z-50">
+              <div className="absolute left-0 top-12 w-[220px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg z-50 dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/50">
                 <div className="max-h-64 overflow-y-auto p-2">
                   {devices.map((device) => (
                     <button
                       key={device.id}
                       onClick={() => {
-                        setSelectedDevice(device);
+                        setActiveDevice(device.id);
                         setDevicesOpen(false);
                       }}
                       className={`w-full flex items-center gap-2 rounded-xl px-3 py-2 text-left text-sm transition ${
@@ -144,7 +149,7 @@ const Topbar: React.FC = () => {
           <button
             type="button"
             onClick={toggleTheme}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-slate-200/80 text-xl transition hover:border-blue-400/60 hover:bg-slate-300/80 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-blue-500/60 dark:hover:bg-slate-700/80"
+            className={iconBtnClass}
             aria-label="Toggle dark mode"
           >
             {theme === 'dark' ? '☀️' : '🌙'}
@@ -158,7 +163,7 @@ const Topbar: React.FC = () => {
               setProfileOpen(false);
               setDevicesOpen(false);
             }}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-slate-200/80 text-xl transition hover:border-blue-400/60 hover:bg-slate-300/80 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-blue-500/60 dark:hover:bg-slate-700/80"
+            className={iconBtnClass}
             aria-expanded={notificationsOpen}
             aria-label="Toggle notifications"
           >
@@ -167,7 +172,7 @@ const Topbar: React.FC = () => {
           </button>
 
           {notificationsOpen ? (
-            <div className="absolute right-0 top-12 w-[22rem] overflow-hidden rounded-2xl border border-slate-300 bg-white/95 shadow-2xl shadow-slate-300/60 transition-colors duration-300 dark:border-slate-700 dark:bg-slate-950/95 dark:shadow-slate-950/60">
+            <div className="absolute right-0 top-12 w-[22rem] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/50">
               <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Notifications</p>
@@ -202,7 +207,7 @@ const Topbar: React.FC = () => {
               setNotificationsOpen(false);
               setDevicesOpen(false);
             }}
-            className="flex items-center gap-2 rounded-full border border-slate-300 bg-slate-100 hover:bg-slate-200 px-2 py-1.5 transition hover:border-blue-400/60 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:border-blue-500/60 dark:hover:bg-slate-700/80"
+            className="flex items-center gap-2 rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-2 py-1.5 transition-colors dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-800"
             aria-expanded={profileOpen}
             aria-label="Open profile menu"
           >
@@ -215,7 +220,7 @@ const Topbar: React.FC = () => {
           </button>
 
           {profileOpen ? (
-            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-2xl border border-slate-300 bg-white/95 shadow-2xl shadow-slate-300/60 dark:border-slate-700 dark:bg-slate-950/95 dark:shadow-slate-950/60">
+            <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:shadow-black/50">
               <div className="border-b border-slate-200 px-4 py-3 dark:border-slate-800">
                 <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{user?.name || 'User'}</p>
                 <p className="text-xs text-slate-600 dark:text-slate-400">{user?.email || 'user@example.com'}</p>
@@ -240,6 +245,11 @@ const Topbar: React.FC = () => {
           ) : null}
         </div>
       </div>
+      <AddDeviceModal 
+        isOpen={addDeviceModalOpen} 
+        onClose={() => setAddDeviceModalOpen(false)} 
+        token={token}
+      />
     </header>
   );
 };

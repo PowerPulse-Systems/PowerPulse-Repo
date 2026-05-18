@@ -7,91 +7,87 @@ import Home from './pages/Home/Home';
 import Login from './pages/Login/Login';
 import Signup from './pages/Signup/Signup';
 import Dashboard from './pages/Dashboard/Dashboard';
-import DeviceSetup from './pages/DeviceSetup/DeviceSetup';
-import BreakerAssign from './pages/BreakerAssign/BreakerAssign';
-import SwitchNodePairing from './pages/SwitchNodePairing/SwitchNodePairing';
-import SensorNodePairing from './pages/SensorNodePairing/SensorNodePairing';
+import DevicesList from './pages/Devices/DevicesList';
+import DeviceSettings from './pages/Devices/DeviceSettings';
 import Analytics from './pages/Analytics/Analytics';
 import Alerts from './pages/Alerts/Alerts';
 import Settings from './pages/Settings/Settings';
 
-// Layouts
+// Layouts & Guards
 import DashboardLayout from './layouts/DashboardLayout';
+import { ProtectedRoute } from './components/common/ProtectedRoute';
+import { GuestRoute } from './components/common/GuestRoute';
 
 import './App.css';
 
 const App: React.FC = () => {
   return (
-    <Router>
+    <Router basename="/PowerPulse-Repo">
       <Routes>
         {/* Public Routes */}
         <Route path='/' element={<Home />} />
-        <Route path='/login' element={<Login />} />
-        <Route path='/signup' element={<Signup />} />
+        <Route path='/login' element={<GuestRoute><Login /></GuestRoute>} />
+        <Route path='/signup' element={<GuestRoute><Signup /></GuestRoute>} />
 
         {/* Dashboard Routes with Layout */}
         <Route 
           path='/dashboard' 
           element={
-            <DashboardLayout>
-              <Dashboard />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Dashboard />
+              </DashboardLayout>
+            </ProtectedRoute>
           } 
         />
         <Route 
-          path='/setup' 
+          path='/devices' 
           element={
-            <DashboardLayout>
-              <DeviceSetup />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <DevicesList />
+              </DashboardLayout>
+            </ProtectedRoute>
           } 
         />
         <Route 
-          path='/breakers' 
+          path='/devices/:id' 
           element={
-            <DashboardLayout>
-              <BreakerAssign />
-            </DashboardLayout>
-          } 
-        />
-        <Route 
-          path='/pairing/switch' 
-          element={
-             <DashboardLayout>
-               <SwitchNodePairing />
-             </DashboardLayout>
-          } 
-        />
-        <Route 
-          path='/pairing/sensor' 
-          element={
-             <DashboardLayout>
-               <SensorNodePairing />
-             </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <DeviceSettings />
+              </DashboardLayout>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path='/analytics' 
           element={
-            <DashboardLayout>
-              <Analytics />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Analytics />
+              </DashboardLayout>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path='/alerts' 
           element={
-            <DashboardLayout>
-              <Alerts />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Alerts />
+              </DashboardLayout>
+            </ProtectedRoute>
           } 
         />
         <Route 
           path='/settings' 
           element={
-            <DashboardLayout>
-              <Settings />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <Settings />
+              </DashboardLayout>
+            </ProtectedRoute>
           } 
         />
       </Routes>

@@ -20,7 +20,7 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:3000/auth/login', {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/login`, {
         email,
         password
       });
@@ -90,7 +90,7 @@ const Login: React.FC = () => {
         
         {/* Content */}
         <div className="z-10 flex flex-col items-center p-12 text-center">
-          <h1 className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4 drop-shadow-sm dark:drop-shadow-lg">SmartEMS</h1>
+          <h1 className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4 drop-shadow-sm dark:drop-shadow-lg">PowerPulse</h1>
           <p className="text-xl text-slate-700 dark:text-slate-200 max-w-md drop-shadow-sm dark:drop-shadow-md">
             Industrial-grade dashboard for precise energy tracking and automation.
           </p>

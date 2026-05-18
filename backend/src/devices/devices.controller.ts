@@ -12,8 +12,8 @@ export class DevicesController {
    * POST /devices/register
    */
   @Post('register')
-  register(@Body() dto: { macAddress: string; type: string; firmwareVersion?: string }) {
-    return this.devicesService.register(dto.macAddress, dto.type, dto.firmwareVersion);
+  register(@Body() dto: { macAddress: string; type: string; name?: string; firmwareVersion?: string }) {
+    return this.devicesService.register(dto.macAddress, dto.type, dto.name, dto.firmwareVersion);
   }
 
   /**
@@ -50,5 +50,14 @@ export class DevicesController {
   @Post(':id/reset')
   reset(@Param('id') id: string, @Request() req: any) {
     return this.devicesService.reset(id, req.user.userId);
+  }
+
+  /**
+   * Activate a device after successful provisioning.
+   * POST /devices/:id/activate
+   */
+  @Post(':id/activate')
+  activate(@Param('id') id: string, @Request() req: any) {
+    return this.devicesService.activate(id, req.user.userId);
   }
 }

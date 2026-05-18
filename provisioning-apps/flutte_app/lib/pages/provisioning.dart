@@ -1,21 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../main.dart';
 import '../models/device.dart';
 import 'dart:async';
 
 class ProvisioningPage extends StatefulWidget {
   final DeviceModel device;
+  final String deviceName;
   final String ssid;
   final String password;
+  final String mqttHost;
+  final int mqttPort;
+  final String mqttUser;
+  final String mqttPass;
   final VoidCallback onComplete;
   final VoidCallback onError;
 
   const ProvisioningPage({
     super.key,
     required this.device,
+    required this.deviceName,
     required this.ssid,
     required this.password,
+    required this.mqttHost,
+    required this.mqttPort,
+    required this.mqttUser,
+    required this.mqttPass,
     required this.onComplete,
     required this.onError,
   });
@@ -34,9 +45,9 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
   final List<StepData> _steps = [
     StepData('Sending configuration...', 'pending'),
     StepData('Connecting to WiFi...', 'pending'),
-    StepData('Connecting to cloud...', 'pending'),
-    StepData('Registering device...', 'pending'),
-    StepData('Linking to account...', 'pending'),
+    StepData('Connecting to MQTT...', 'pending'),
+    StepData('Registering with backend...', 'pending'),
+    StepData('Saving to device...', 'pending'),
   ];
   String? _errorMsg;
   StreamSubscription? _statusSub;
@@ -61,54 +72,160 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
     }
   }
 
+  /// Wait for a specific BLE status string from the ESP, with a timeout.
+  /// Returns true if the expected status was received, false on timeout.
+  Future<bool> _waitForStatus(String expected, Duration timeout) async {
+    final completer = Completer<bool>();
+    StreamSubscription? sub;
+    Timer? timer;
+
+    final state = context.read<AppState>();
+
+    sub = state.ble.statusUpdates.listen((status) {
+      if (status == expected) {
+        timer?.cancel();
+        sub?.cancel();
+        if (!completer.isCompleted) completer.complete(true);
+      } else if (status.startsWith('ERROR') || status.endsWith('_FAILED')) {
+        // Any failure status from ESP
+        timer?.cancel();
+        sub?.cancel();
+        if (!completer.isCompleted) completer.complete(false);
+      }
+    });
+
+    timer = Timer(timeout, () {
+      sub?.cancel();
+      if (!completer.isCompleted) completer.complete(false);
+    });
+
+    return completer.future;
+  }
+
+  Future<void> _rollbackAndFail(String errorMessage) async {
+    final state = context.read<AppState>();
+    
+    // Tell ESP to discard credentials and return to provisioning mode
+    try {
+      await state.ble.sendCommand('ROLLBACK');
+      // Wait briefly for ROLLBACK_OK
+      await _waitForStatus('ROLLBACK_OK', const Duration(seconds: 5));
+    } catch (_) {
+      // Best effort — even if rollback command fails, still show the error
+    }
+
+    if (mounted) {
+      setState(() {
+        _errorMsg = errorMessage;
+      });
+    }
+  }
+
   Future<void> _startProvisioning() async {
     final state = context.read<AppState>();
     
     try {
+      // =======================================
+      // Step 1: Send credentials to ESP via BLE
+      // =======================================
       _updateStep(0, 'active');
       
+      final backendUrl = dotenv.env['API_URL'] ?? 'http://localhost:3000';
       final payload = {
         'wifi_ssid': widget.ssid,
         'wifi_password': widget.password,
-        'backend_url': 'http://localhost:3000',
+        'backend_url': backendUrl,
         'device_id': widget.device.id,
+        'mqtt_host': widget.mqttHost,
+        'mqtt_port': widget.mqttPort,
+        'mqtt_username': widget.mqttUser,
+        'mqtt_password': widget.mqttPass,
       };
 
-      _statusSub = state.ble.statusUpdates.listen((status) {
-        if (status == 'RECEIVED') { _updateStep(0, 'done'); _updateStep(1, 'active'); }
-        if (status == 'WIFI_CONNECTED') { _updateStep(1, 'done'); _updateStep(2, 'active'); }
-        if (status == 'MQTT_CONNECTED') { _updateStep(2, 'done'); }
-        if (status == 'WIFI_FAILED') { _updateStep(1, 'error'); setState(() => _errorMsg = 'WiFi failed'); }
-        if (status == 'MQTT_FAILED') { _updateStep(2, 'error'); setState(() => _errorMsg = 'MQTT failed'); }
-      });
-
       await state.ble.provision(payload);
-      // Wait for MQTT step to be marked done visually
-      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Wait for RECEIVED acknowledgment
+      final received = await _waitForStatus('RECEIVED', const Duration(seconds: 10));
+      if (!received) {
+        _updateStep(0, 'error');
+        await _rollbackAndFail('ESP did not acknowledge the configuration payload.');
+        return;
+      }
+      _updateStep(0, 'done');
 
-      if (_errorMsg != null) return;
+      // =======================================
+      // Step 2: Wait for WiFi connection on ESP
+      // =======================================
+      _updateStep(1, 'active');
+      
+      final wifiOk = await _waitForStatus('WIFI_CONNECTED', const Duration(seconds: 30));
+      if (!wifiOk) {
+        _updateStep(1, 'error');
+        await _rollbackAndFail('ESP failed to connect to WiFi. Check SSID and password.');
+        return;
+      }
+      _updateStep(1, 'done');
 
-      // Register step
+      // =======================================
+      // Step 3: Wait for MQTT connection on ESP
+      // =======================================
+      _updateStep(2, 'active');
+      
+      final mqttOk = await _waitForStatus('MQTT_CONNECTED', const Duration(seconds: 30));
+      if (!mqttOk) {
+        _updateStep(2, 'error');
+        await _rollbackAndFail('ESP failed to connect to MQTT broker. Check host and credentials.');
+        return;
+      }
+      _updateStep(2, 'done');
+
+      // =======================================
+      // Step 4: Register + Claim device with backend
+      // =======================================
       _updateStep(3, 'active');
-      final dbDeviceId = await state.api.registerDevice(widget.device.mac);
-      if (dbDeviceId == null) throw Exception('Registration failed');
+      
+      final dbDeviceId = await state.api.registerDevice(widget.device.mac, name: widget.deviceName);
+      if (dbDeviceId == null) {
+        _updateStep(3, 'error');
+        await _rollbackAndFail('Backend rejected device registration. Please try again.');
+        return;
+      }
+
+      final claimSuccess = await state.api.claimDevice(dbDeviceId);
+      if (!claimSuccess) {
+        _updateStep(3, 'error');
+        await _rollbackAndFail('Failed to link device to your account.');
+        return;
+      }
       _updateStep(3, 'done');
 
-      // Claim step
+      // =======================================
+      // Step 5: Send COMMIT to ESP (save to NVS)
+      // =======================================
       _updateStep(4, 'active');
-      final claimSuccess = await state.api.claimDevice(dbDeviceId);
-      if (!claimSuccess) throw Exception('Claim failed');
+      
+      await state.ble.sendCommand('COMMIT');
+      
+      final provisioned = await _waitForStatus('PROVISIONED', const Duration(seconds: 15));
+      if (!provisioned) {
+        _updateStep(4, 'error');
+        setState(() {
+          _errorMsg = 'ESP failed to save configuration. Try again.';
+        });
+        return;
+      }
       _updateStep(4, 'done');
 
+      // Final: Activate device in backend (non-critical)
+      await state.api.activateDevice(dbDeviceId);
+
+      // Done!
       await Future.delayed(const Duration(milliseconds: 1000));
       if (mounted) widget.onComplete();
 
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMsg = e.toString();
-        });
-      }
+      // Unexpected error — rollback
+      await _rollbackAndFail('Unexpected error: ${e.toString()}');
     }
   }
 
@@ -150,6 +267,12 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
                   child: Column(
                     children: [
                       Text(_errorMsg!, style: const TextStyle(color: Color(0xFFF87171))),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'The device has been rolled back to provisioning mode. You can try again.',
+                        style: TextStyle(color: Color(0xFF94A3B8), fontSize: 12),
+                        textAlign: TextAlign.center,
+                      ),
                       const SizedBox(height: 12),
                       ElevatedButton(
                         onPressed: widget.onError,

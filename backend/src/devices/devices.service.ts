@@ -11,7 +11,7 @@ export class DevicesService {
    * Register a new device (called during provisioning).
    * If the device already exists (by MAC), return the existing record.
    */
-  async register(macAddress: string, type: string, firmwareVersion?: string) {
+  async register(macAddress: string, type: string, name?: string, firmwareVersion?: string) {
     const existing = await this.prisma.device.findUnique({
       where: { macAddress },
     });
@@ -25,6 +25,7 @@ export class DevicesService {
       data: {
         macAddress,
         type,
+        name,
         firmwareVersion: firmwareVersion || null,
       },
     });
@@ -131,5 +132,34 @@ export class DevicesService {
       this.logger.warn(`Could not update status for device ${macAddress}: not found`);
       return null;
     }
+  }
+
+  /**
+   * Activate a device after provisioning is confirmed.
+   * Called by the Flutter app after the ESP sends PROVISIONED.
+   */
+  async activate(deviceId: string, userId: string) {
+    const device = await this.prisma.device.findUnique({
+      where: { id: deviceId },
+    });
+
+    if (!device) {
+      throw new NotFoundException(`Device ${deviceId} not found`);
+    }
+
+    if (device.userId && device.userId !== userId) {
+      throw new ConflictException('You do not own this device');
+    }
+
+    const updated = await this.prisma.device.update({
+      where: { id: deviceId },
+      data: {
+        onlineStatus: true,
+        lastSeen: new Date(),
+      },
+    });
+
+    this.logger.log(`Device ${deviceId} activated by user ${userId}`);
+    return updated;
   }
 }

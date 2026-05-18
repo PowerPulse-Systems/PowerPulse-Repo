@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/device.dart';
 
 class SuccessPage extends StatefulWidget {
@@ -103,9 +105,12 @@ class _SuccessPageState extends State<SuccessPage> with SingleTickerProviderStat
   
               // Actions
               ElevatedButton(
-                onPressed: () {
-                  // In a real app, use url_launcher to open the web dashboard
-                  // launchUrl(Uri.parse('http://localhost:5173/dashboard'));
+                onPressed: () async {
+                  final dashboardUrl = dotenv.env['DASHBOARD_URL'] ?? 'https://powerpulse-systems.github.io/PowerPulse-Repo/dashboard';
+                  final uri = Uri.parse(dashboardUrl);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2563EB),

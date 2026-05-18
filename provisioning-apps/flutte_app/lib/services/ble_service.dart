@@ -1,15 +1,35 @@
+import 'dart:convert';
 import 'dart:async';
+import 'dart:typed_data';
 import '../models/device.dart';
 import 'package:universal_ble/universal_ble.dart';
 
 class BleService {
+  static const String provisionServiceUuid = "12345678-1234-1234-1234-123456789abc";
+  static const String provisionWriteUuid = "12345678-1234-1234-1234-123456789abd";
+  static const String provisionStatusUuid = "12345678-1234-1234-1234-123456789abe";
+  static const String provisionInfoUuid = "12345678-1234-1234-1234-123456789abf";
+
   final StreamController<List<DeviceModel>> _scanController = StreamController<List<DeviceModel>>.broadcast();
   final StreamController<String> _statusController = StreamController<String>.broadcast();
+  final StreamController<AvailabilityState> _bluetoothStateController = StreamController<AvailabilityState>.broadcast();
   
   Stream<List<DeviceModel>> get scanResults => _scanController.stream;
   Stream<String> get statusUpdates => _statusController.stream;
+  Stream<AvailabilityState> get bluetoothState => _bluetoothStateController.stream;
+
+  BleService() {
+    UniversalBle.onAvailabilityChange = (AvailabilityState state) {
+      _bluetoothStateController.add(state);
+    };
+  }
+
+  Future<AvailabilityState> getBluetoothState() async {
+    return await UniversalBle.getBluetoothAvailabilityState();
+  }
 
   List<DeviceModel> _scannedDevices = [];
+  String? _connectedDeviceId;
 
   // --- Real Scanning Implementation ---
 
@@ -50,27 +70,94 @@ class BleService {
   Future<bool> connect(String deviceId) async {
     try {
       await UniversalBle.connect(deviceId);
+      _connectedDeviceId = deviceId;
+      
+      // Discover services
+      await UniversalBle.discoverServices(deviceId);
+      
+      // Setup notification listener
+      UniversalBle.onValueChange = (String id, String characteristicId, Uint8List value, int? transactionId) {
+        if (characteristicId == provisionStatusUuid || characteristicId == provisionStatusUuid.toUpperCase()) {
+          final status = utf8.decode(value);
+          _statusController.add(status);
+        }
+      };
+      
+      // Subscribe to status characteristic
+      await UniversalBle.setNotifiable(deviceId, provisionServiceUuid, provisionStatusUuid, BleInputProperty.notification);
+      
       return true;
     } catch (e) {
       print('Connection failed: $e');
+      _connectedDeviceId = null;
       return false;
     }
   }
 
+  Future<Map<String, dynamic>?> readDeviceInfo() async {
+    if (_connectedDeviceId == null) return null;
+    
+    try {
+      final value = await UniversalBle.readValue(_connectedDeviceId!, provisionServiceUuid, provisionInfoUuid);
+      final jsonString = utf8.decode(value);
+      return jsonDecode(jsonString) as Map<String, dynamic>;
+    } catch (e) {
+      print('Failed to read device info: $e');
+      return null;
+    }
+  }
+
   Future<void> provision(Map<String, dynamic> payload) async {
-    // Simulate the provisioning steps sent from the ESP32 via BLE characteristics
-    _statusController.add('RECEIVED');
-    await Future.delayed(const Duration(milliseconds: 1500));
+    if (_connectedDeviceId == null) {
+      throw Exception('Not connected to a device');
+    }
     
-    _statusController.add('WIFI_CONNECTED');
-    await Future.delayed(const Duration(milliseconds: 1500));
-    
-    _statusController.add('MQTT_CONNECTED');
+    try {
+      final jsonString = jsonEncode(payload);
+      final data = Uint8List.fromList(utf8.encode(jsonString));
+      
+      await UniversalBle.writeValue(
+        _connectedDeviceId!, 
+        provisionServiceUuid, 
+        provisionWriteUuid, 
+        data, 
+        BleOutputProperty.withResponse
+      );
+    } catch (e) {
+      print('Failed to send provision data: $e');
+      _statusController.add('MQTT_FAILED'); // Treat write error as failure to provision
+      rethrow;
+    }
+  }
+
+  /// Send a plain-text command to the ESP (e.g. COMMIT or ROLLBACK)
+  Future<void> sendCommand(String command) async {
+    if (_connectedDeviceId == null) {
+      throw Exception('Not connected to a device');
+    }
+
+    try {
+      final data = Uint8List.fromList(utf8.encode(command));
+      await UniversalBle.writeValue(
+        _connectedDeviceId!,
+        provisionServiceUuid,
+        provisionWriteUuid,
+        data,
+        BleOutputProperty.withResponse
+      );
+      print('[BLE] Sent command: $command');
+    } catch (e) {
+      print('[BLE] Failed to send command $command: $e');
+      rethrow;
+    }
   }
 
   void dispose() {
     _scanController.close();
     _statusController.close();
-    UniversalBle.stopScan();
+    UniversalBle.onValueChange = null;
+    if (_connectedDeviceId != null) {
+      UniversalBle.disconnect(_connectedDeviceId!);
+    }
   }
 }

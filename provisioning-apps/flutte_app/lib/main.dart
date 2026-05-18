@@ -6,11 +6,14 @@ import 'services/api_service.dart';
 import 'services/ble_service.dart';
 import 'models/device.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'pages/welcome.dart';
 import 'pages/scan.dart';
 import 'pages/configure.dart';
 import 'pages/provisioning.dart';
 import 'pages/success.dart';
+
+import 'package:universal_ble/universal_ble.dart' hide BleService;
 
 // App State to hold data passed between screens
 class AppState extends ChangeNotifier {
@@ -21,6 +24,23 @@ class AppState extends ChangeNotifier {
   DeviceModel? selectedDevice;
   String wifiSsid = '';
   String wifiPassword = '';
+  String deviceName = '';
+  String mqttHost = '';
+  int mqttPort = 1883;
+  String mqttUser = '';
+  String mqttPass = '';
+  AvailabilityState bluetoothState = AvailabilityState.unknown;
+
+  AppState() {
+    ble.getBluetoothState().then((state) {
+      bluetoothState = state;
+      notifyListeners();
+    });
+    ble.bluetoothState.listen((state) {
+      bluetoothState = state;
+      notifyListeners();
+    });
+  }
 
   void setAuth(String newToken) {
     token = newToken;
@@ -32,9 +52,14 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setWifi(String ssid, String pass) {
+  void setConfig(String name, String ssid, String pass, String mHost, int mPort, String mUser, String mPass) {
+    deviceName = name;
     wifiSsid = ssid;
     wifiPassword = pass;
+    mqttHost = mHost;
+    mqttPort = mPort;
+    mqttUser = mUser;
+    mqttPass = mPass;
     notifyListeners();
   }
 
@@ -42,6 +67,11 @@ class AppState extends ChangeNotifier {
     selectedDevice = null;
     wifiSsid = '';
     wifiPassword = '';
+    deviceName = '';
+    mqttHost = '';
+    mqttPort = 1883;
+    mqttUser = '';
+    mqttPass = '';
     notifyListeners();
   }
 
@@ -51,7 +81,8 @@ class AppState extends ChangeNotifier {
   }
 }
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(
     ChangeNotifierProvider(
       create: (context) => AppState(),
@@ -163,8 +194,8 @@ class _MainContainerState extends State<MainContainer> {
       case 2:
         activePage = ConfigurePage(
           device: state.selectedDevice!,
-          onSubmit: (ssid, pass) {
-            state.setWifi(ssid, pass);
+          onSubmit: (name, ssid, pass, host, port, user, mqttPass) {
+            state.setConfig(name, ssid, pass, host, port, user, mqttPass);
             _navigateTo(3);
           },
           onBack: () => _navigateTo(1),
@@ -173,8 +204,13 @@ class _MainContainerState extends State<MainContainer> {
       case 3:
         activePage = ProvisioningPage(
           device: state.selectedDevice!,
+          deviceName: state.deviceName,
           ssid: state.wifiSsid,
           password: state.wifiPassword,
+          mqttHost: state.mqttHost,
+          mqttPort: state.mqttPort,
+          mqttUser: state.mqttUser,
+          mqttPass: state.mqttPass,
           onComplete: () => _navigateTo(4),
           onError: () {
             state.reset();

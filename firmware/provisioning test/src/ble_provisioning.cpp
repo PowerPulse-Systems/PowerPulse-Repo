@@ -14,6 +14,10 @@ static BLECharacteristic* pInfoChar = nullptr;
 static bool clientConnected = false;
 static ProvisioningCallback onProvisioningReceived = nullptr;
 
+// Global command flags — read by main.cpp loop()
+volatile bool commitRequested = false;
+volatile bool rollbackRequested = false;
+
 // ========================
 // BLE Server Callbacks
 // ========================
@@ -38,23 +42,40 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic* pCharacteristic) override {
     std::string rxValue = pCharacteristic->getValue();
     String value = rxValue.c_str();
+    value.trim();
     
     if (value.length() == 0) {
       Serial.println("[BLE] Empty write received");
       return;
     }
 
-    Serial.printf("[BLE] Received provisioning payload (%d bytes)\n", value.length());
+    // ---- Check for plain-text commands first ----
+    if (value == "COMMIT") {
+      Serial.println("[BLE] COMMIT command received from app");
+      commitRequested = true;
+      return;
+    }
+    
+    if (value == "ROLLBACK") {
+      Serial.println("[BLE] ROLLBACK command received from app");
+      rollbackRequested = true;
+      return;
+    }
+
+    // ---- Otherwise, treat as JSON provisioning payload ----
+    Serial.printf("[BLE] Received provisioning payload (%d bytes):\n", value.length());
 
     // Parse JSON payload
     JsonDocument doc;
     DeserializationError error = deserializeJson(doc, value);
 
     if (error) {
-      Serial.printf("[BLE] JSON parse error: %s\n", error.c_str());
+      Serial.printf("[BLE] JSON parse error: %s (payload: %s)\n", error.c_str(), value.c_str());
       BleProvisioning::sendStatus("ERROR:Invalid JSON");
       return;
     }
+
+    Serial.println("[BLE] JSON parsed successfully");
 
     // Extract fields
     const char* wifiSsid   = doc["wifi_ssid"]     | "";
@@ -66,6 +87,14 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
     const char* mqttUser   = doc["mqtt_username"]   | "";
     const char* mqttPass   = doc["mqtt_password"]   | "";
 
+    Serial.printf("[BLE] Extracted Config:\n");
+    Serial.printf("  - SSID: %s\n", wifiSsid);
+    Serial.printf("  - Backend URL: %s\n", backendUrl);
+    Serial.printf("  - Device ID: %s\n", deviceId);
+    Serial.printf("  - MQTT Host: %s:%d\n", mqttHost, mqttPort);
+    Serial.printf("  - MQTT User: %s\n", mqttUser);
+    Serial.printf("  - MQTT Pass: %s\n", mqttPass);
+
     // Validate required fields
     if (strlen(wifiSsid) == 0 || strlen(backendUrl) == 0 || strlen(mqttHost) == 0) {
       BleProvisioning::sendStatus("ERROR:Missing required fields");
@@ -74,7 +103,7 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
 
     BleProvisioning::sendStatus("RECEIVED");
 
-    // Invoke the callback
+    // Invoke the callback (stores data in RAM, does NOT save to NVS)
     if (onProvisioningReceived) {
       onProvisioningReceived(wifiSsid, wifiPass, backendUrl, deviceId, mqttHost, mqttPort, mqttUser, mqttPass);
     }
