@@ -51,10 +51,12 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
     DeserializationError error = deserializeJson(doc, value);
 
     if (error) {
-      Serial.printf("[BLE] JSON parse error: %s\n", error.c_str());
+      Serial.printf("[BLE] JSON parse error: %s (payload: %s)\n", error.c_str(), value.c_str());
       BleProvisioning::sendStatus("ERROR:Invalid JSON");
       return;
     }
+
+    Serial.println("[BLE] JSON parsed successfully");
 
     // Extract fields
     const char* wifiSsid   = doc["wifi_ssid"]     | "";
@@ -65,6 +67,12 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
     uint16_t    mqttPort   = doc["mqtt_port"]      | 1883;
     const char* mqttUser   = doc["mqtt_username"]   | "";
     const char* mqttPass   = doc["mqtt_password"]   | "";
+
+    Serial.printf("[BLE] Extracted Config:\n");
+    Serial.printf("  - SSID: %s\n", wifiSsid);
+    Serial.printf("  - Backend URL: %s\n", backendUrl);
+    Serial.printf("  - Device ID: %s\n", deviceId);
+    Serial.printf("  - MQTT Host: %s:%d\n", mqttHost, mqttPort);
 
     // Validate required fields
     if (strlen(wifiSsid) == 0 || strlen(backendUrl) == 0 || strlen(mqttHost) == 0) {

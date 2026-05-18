@@ -13,6 +13,8 @@ import 'pages/configure.dart';
 import 'pages/provisioning.dart';
 import 'pages/success.dart';
 
+import 'package:universal_ble/universal_ble.dart';
+
 // App State to hold data passed between screens
 class AppState extends ChangeNotifier {
   final ApiService api = ApiService();
@@ -27,6 +29,18 @@ class AppState extends ChangeNotifier {
   int mqttPort = 1883;
   String mqttUser = '';
   String mqttPass = '';
+  AvailabilityState bluetoothState = AvailabilityState.unknown;
+
+  AppState() {
+    ble.getBluetoothState().then((state) {
+      bluetoothState = state;
+      notifyListeners();
+    });
+    ble.bluetoothState.listen((state) {
+      bluetoothState = state;
+      notifyListeners();
+    });
+  }
 
   void setAuth(String newToken) {
     token = newToken;

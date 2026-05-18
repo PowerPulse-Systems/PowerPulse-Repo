@@ -7,24 +7,41 @@ static WiFiClient espClient;
 static PubSubClient mqttClient(espClient);
 
 bool MqttClient::connect(const char* host, uint16_t port, const char* username, const char* password, const char* clientId) {
-  Serial.printf("[MQTT] Connecting to %s:%d...\n", host, port);
+  Serial.printf("[MQTT] Initializing connection to Broker at %s:%d...\n", host, port);
+  Serial.printf("[MQTT] Using Client ID: %s, Username length: %d\n", clientId, strlen(username));
   
   mqttClient.setServer(host, port);
   
   int retries = 0;
   while (!mqttClient.connected() && retries < MQTT_MAX_RETRIES) {
+    Serial.printf("[MQTT] Connection attempt %d/%d...\n", retries + 1, MQTT_MAX_RETRIES);
     if (mqttClient.connect(clientId, username, password)) {
-      Serial.println("[MQTT] Connected!");
+      Serial.println("[MQTT] Successfully connected to broker!");
       return true;
     }
     
-    Serial.printf("[MQTT] Connection failed (rc=%d), retrying in %dms...\n", 
-                  mqttClient.state(), MQTT_RECONNECT_DELAY_MS);
+    int state = mqttClient.state();
+    Serial.printf("[MQTT] Connection failed (rc=%d). ", state);
+    
+    // Provide some context for the error code
+    switch(state) {
+      case MQTT_CONNECTION_TIMEOUT: Serial.print("Timeout. "); break;
+      case MQTT_CONNECTION_LOST: Serial.print("Connection lost. "); break;
+      case MQTT_CONNECT_FAILED: Serial.print("Connect failed. "); break;
+      case MQTT_DISCONNECTED: Serial.print("Disconnected. "); break;
+      case MQTT_CONNECT_BAD_PROTOCOL: Serial.print("Bad protocol. "); break;
+      case MQTT_CONNECT_BAD_CLIENT_ID: Serial.print("Bad Client ID. "); break;
+      case MQTT_CONNECT_UNAVAILABLE: Serial.print("Unavailable. "); break;
+      case MQTT_CONNECT_BAD_CREDENTIALS: Serial.print("Bad credentials. "); break;
+      case MQTT_CONNECT_UNAUTHORIZED: Serial.print("Unauthorized. "); break;
+    }
+    
+    Serial.printf("Retrying in %dms...\n", MQTT_RECONNECT_DELAY_MS);
     delay(MQTT_RECONNECT_DELAY_MS);
     retries++;
   }
 
-  Serial.println("[MQTT] Connection failed after max retries");
+  Serial.println("[MQTT] Connection completely failed after max retries.");
   return false;
 }
 

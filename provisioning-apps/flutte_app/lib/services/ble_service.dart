@@ -11,9 +11,21 @@ class BleService {
 
   final StreamController<List<DeviceModel>> _scanController = StreamController<List<DeviceModel>>.broadcast();
   final StreamController<String> _statusController = StreamController<String>.broadcast();
+  final StreamController<AvailabilityState> _bluetoothStateController = StreamController<AvailabilityState>.broadcast();
   
   Stream<List<DeviceModel>> get scanResults => _scanController.stream;
   Stream<String> get statusUpdates => _statusController.stream;
+  Stream<AvailabilityState> get bluetoothState => _bluetoothStateController.stream;
+
+  BleService() {
+    UniversalBle.onAvailabilityChange = (AvailabilityState state) {
+      _bluetoothStateController.add(state);
+    };
+  }
+
+  Future<AvailabilityState> getBluetoothState() async {
+    return await UniversalBle.getBluetoothAvailabilityState();
+  }
 
   List<DeviceModel> _scannedDevices = [];
   String? _connectedDeviceId;
