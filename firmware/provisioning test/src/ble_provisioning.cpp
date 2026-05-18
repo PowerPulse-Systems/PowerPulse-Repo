@@ -74,6 +74,8 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
     Serial.printf("  - Backend URL: %s\n", backendUrl);
     Serial.printf("  - Device ID: %s\n", deviceId);
     Serial.printf("  - MQTT Host: %s:%d\n", mqttHost, mqttPort);
+    Serial.printf("  - MQTT User: %s\n", mqttUser);
+    Serial.printf("  - MQTT Pass: %s\n", mqttPass);
 
     // Validate required fields
     if (strlen(wifiSsid) == 0 || strlen(backendUrl) == 0 || strlen(mqttHost) == 0) {

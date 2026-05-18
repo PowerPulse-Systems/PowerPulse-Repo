@@ -226,6 +226,13 @@ void setup() {
 void loop() {
   LedStatus::update();
 
+  // Check if user is holding the BOOT button to perform a factory reset
+  if (checkResetButton()) {
+    Serial.println("[Main] Config cleared by button, restarting...");
+    delay(1000);
+    ESP.restart();
+  }
+
   switch (currentState) {
     case DeviceState::PROVISIONING:
       // BLE server handles everything via callbacks
