@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 
 interface AddDeviceModalProps {
   isOpen: boolean;
@@ -15,9 +16,9 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose, token 
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg overflow-hidden bg-white rounded-2xl shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+  const modalContent = (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden bg-white rounded-2xl shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
         
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-800">
@@ -36,7 +37,7 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose, token 
         </div>
 
         {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-6 overflow-y-auto">
           <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
             To add a new PowerPulse device, you'll need the <strong>PowerPulse Setup</strong> companion app installed on your computer. This app communicates with your device via Bluetooth to configure WiFi and connect it to your account.
           </p>
@@ -95,6 +96,8 @@ const AddDeviceModal: React.FC<AddDeviceModalProps> = ({ isOpen, onClose, token 
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };
 
 export default AddDeviceModal;
