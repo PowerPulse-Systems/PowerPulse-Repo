@@ -44,7 +44,8 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
       return;
     }
 
-    Serial.printf("[BLE] Received provisioning payload (%d bytes)\n", value.length());
+    Serial.printf("[BLE] Received provisioning payload (%d bytes):\n", value.length());
+    Serial.println(value);
 
     // Parse JSON payload
     JsonDocument doc;
