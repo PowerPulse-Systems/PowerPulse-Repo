@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.png';
+import energy1Image from '../../assets/energy1.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -10,7 +11,8 @@ const Home: React.FC = () => {
     {
       title: 'Energy Monitoring',
       desc: 'Track real-time power draw and historical usage across all breaker nodes.',
-      icon: '⚡'
+      icon: '⚡',
+      image: energy1Image
     },
     {
       title: 'Smart Automation',
@@ -110,47 +112,20 @@ const Home: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
-              <div key={feature.title} className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 hover:bg-slate-800 transition-colors group">
-                <div className="text-4xl mb-6 bg-slate-900 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-700 group-hover:border-blue-500/50 transition-colors">
+              <div
+                key={feature.title}
+                className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 hover:bg-slate-800 transition-colors group overflow-hidden"
+                style={feature.image ? { backgroundImage: `url(${feature.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+              >
+                <div className="text-4xl mb-6 bg-slate-900/80 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-700 group-hover:border-blue-500/50 transition-colors">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-slate-100 mb-3">{feature.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
+                <div className="bg-black/60 p-4 rounded-2xl">
+                  <h3 className="text-xl font-semibold text-slate-100 mb-3">{feature.title}</h3>
+                  <p className="text-slate-200 text-sm leading-relaxed">{feature.desc}</p>
+                </div>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* System Architecture Visualization */}
-      <section className="py-24 border-t border-slate-800/50">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-white mb-12">Seamless Integration</h2>
-          <div className="relative p-8 rounded-2xl border border-slate-800 bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-8">
-            {/* Breaker Panel */}
-            <div className="flex-1 w-full p-6 bg-slate-800 rounded-xl border border-slate-700">
-              <div className="text-3xl mb-3">🔌</div>
-              <div className="font-semibold text-slate-200">Breaker Nodes</div>
-              <div className="text-xs text-slate-400 mt-2">ESP32 + CT Sensors</div>
-            </div>
-            
-            <div className="hidden md:block text-slate-600">→</div>
-
-            {/* Cloud Server */}
-            <div className="flex-1 w-full p-6 bg-slate-800 rounded-xl border border-blue-900/50 shadow-[0_0_30px_rgba(37,99,235,0.1)]">
-              <div className="text-3xl mb-3">☁️</div>
-              <div className="font-semibold text-blue-400">NestJS Backend</div>
-              <div className="text-xs text-slate-400 mt-2">MQTT & WebSockets</div>
-            </div>
-
-            <div className="hidden md:block text-slate-600">→</div>
-
-            {/* Dashboard */}
-            <div className="flex-1 w-full p-6 bg-slate-800 rounded-xl border border-emerald-900/50 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-              <div className="text-3xl mb-3">💻</div>
-              <div className="font-semibold text-emerald-400">Web Dashboard</div>
-              <div className="text-xs text-slate-400 mt-2">React + Analytics</div>
-            </div>
           </div>
         </div>
       </section>
