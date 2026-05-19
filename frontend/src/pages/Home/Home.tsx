@@ -46,7 +46,7 @@ const Home: React.FC = () => {
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">
               ⚡
             </div>
-            <div className="text-xl font-bold text-white tracking-tight">PowerPulse</div>
+            <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">PowerPulse</div>
           </div>
           <nav className="space-x-4 flex items-center">
             {isAuthenticated ? (
@@ -112,7 +112,7 @@ const Home: React.FC = () => {
       <section id="features" className="py-24 bg-white dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Complete Control & Visibility</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Complete Control & Visibility</h2>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Everything you need to monitor, analyze, and optimize your building's energy consumption in one unified platform.</p>
           </div>
 
