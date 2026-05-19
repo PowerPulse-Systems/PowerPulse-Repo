@@ -30,9 +30,9 @@ const Home: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#0f172a] text-slate-800 dark:text-slate-200 font-sans selection:bg-blue-500/30 overflow-x-hidden">
       {/* Navbar */}
-      <header className="fixed w-full top-0 z-50 bg-slate-900/80 backdrop-blur-md border-b border-slate-800">
+      <header className="fixed w-full top-0 z-50 bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
         <div className="max-w-7xl mx-auto px-6 h-16 flex justify-between items-center">
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">
@@ -50,7 +50,7 @@ const Home: React.FC = () => {
               </Link>
             ) : (
               <>
-                <Link to="/login" className="px-4 py-2 text-sm font-medium text-slate-300 hover:text-white transition-colors">Login</Link>
+                <Link to="/login" className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-white transition-colors">Login</Link>
                 <Link to="/signup" className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-all shadow-[0_0_15px_rgba(37,99,235,0.3)]">
                   Create Account
                 </Link>
@@ -101,21 +101,21 @@ const Home: React.FC = () => {
       </section>
 
       {/* Features Overview */}
-      <section id="features" className="py-24 bg-slate-900/50 border-t border-slate-800/50">
+      <section id="features" className="py-24 bg-white dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Complete Control & Visibility</h2>
-            <p className="text-slate-400 max-w-2xl mx-auto">Everything you need to monitor, analyze, and optimize your building's energy consumption in one unified platform.</p>
+            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Everything you need to monitor, analyze, and optimize your building's energy consumption in one unified platform.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
-              <div key={feature.title} className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 hover:bg-slate-800 transition-colors group">
-                <div className="text-4xl mb-6 bg-slate-900 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-700 group-hover:border-blue-500/50 transition-colors">
+              <div key={feature.title} className="bg-slate-100 dark:bg-slate-800/50 p-8 rounded-2xl border border-slate-300 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group">
+                <div className="text-4xl mb-6 bg-white dark:bg-slate-900 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-300 dark:border-slate-700 group-hover:border-blue-500/50 transition-colors">
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-semibold text-slate-100 mb-3">{feature.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
+                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">{feature.title}</h3>
+                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
           </div>
@@ -123,49 +123,49 @@ const Home: React.FC = () => {
       </section>
 
       {/* System Architecture Visualization */}
-      <section className="py-24 border-t border-slate-800/50">
+      <section className="py-24 border-t border-slate-200 dark:border-slate-800/50">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <h2 className="text-3xl font-bold text-white mb-12">Seamless Integration</h2>
-          <div className="relative p-8 rounded-2xl border border-slate-800 bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="relative p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-8">
             {/* Breaker Panel */}
-            <div className="flex-1 w-full p-6 bg-slate-800 rounded-xl border border-slate-700">
+            <div className="flex-1 w-full p-6 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700">
               <div className="text-3xl mb-3">🔌</div>
-              <div className="font-semibold text-slate-200">Breaker Nodes</div>
-              <div className="text-xs text-slate-400 mt-2">ESP32 + CT Sensors</div>
+              <div className="font-semibold text-slate-800 dark:text-slate-200">Breaker Nodes</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">ESP32 + CT Sensors</div>
             </div>
             
             <div className="hidden md:block text-slate-600">→</div>
 
             {/* Cloud Server */}
-            <div className="flex-1 w-full p-6 bg-slate-800 rounded-xl border border-blue-900/50 shadow-[0_0_30px_rgba(37,99,235,0.1)]">
+            <div className="flex-1 w-full p-6 bg-slate-100 dark:bg-slate-800 rounded-xl border border-blue-900/50 shadow-[0_0_30px_rgba(37,99,235,0.1)]">
               <div className="text-3xl mb-3">☁️</div>
               <div className="font-semibold text-blue-400">NestJS Backend</div>
-              <div className="text-xs text-slate-400 mt-2">MQTT & WebSockets</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">MQTT & WebSockets</div>
             </div>
 
             <div className="hidden md:block text-slate-600">→</div>
 
             {/* Dashboard */}
-            <div className="flex-1 w-full p-6 bg-slate-800 rounded-xl border border-emerald-900/50 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+            <div className="flex-1 w-full p-6 bg-slate-100 dark:bg-slate-800 rounded-xl border border-emerald-900/50 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
               <div className="text-3xl mb-3">💻</div>
               <div className="font-semibold text-emerald-400">Web Dashboard</div>
-              <div className="text-xs text-slate-400 mt-2">React + Analytics</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">React + Analytics</div>
             </div>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-slate-950 border-t border-slate-900">
+      <footer className="py-12 bg-slate-50 dark:bg-slate-950 border-t border-slate-900">
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="text-slate-500 flex items-center space-x-2">
+          <div className="text-slate-500 dark:text-slate-500 flex items-center space-x-2">
             <span className="text-xl">⚡</span>
             <span className="font-semibold">PowerPulse</span>
           </div>
           <div className="space-x-6 text-sm">
-            <a href="#" className="text-slate-500 hover:text-slate-300 transition-colors">Documentation</a>
-            <a href="#" className="text-slate-500 hover:text-slate-300 transition-colors">Architecture</a>
-            <a href="#" className="text-slate-500 hover:text-slate-300 transition-colors">Contact Support</a>
+            <a href="#" className="text-slate-500 dark:text-slate-500 hover:text-slate-300 transition-colors">Documentation</a>
+            <a href="#" className="text-slate-500 dark:text-slate-500 hover:text-slate-300 transition-colors">Architecture</a>
+            <a href="#" className="text-slate-500 dark:text-slate-500 hover:text-slate-300 transition-colors">Contact Support</a>
           </div>
           <p className="text-sm text-slate-600">&copy; {new Date().getFullYear()} PowerPulse. All rights reserved.</p>
         </div>
@@ -175,3 +175,4 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+

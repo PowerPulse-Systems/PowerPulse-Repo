@@ -31,7 +31,7 @@ const DevicesList: React.FC = () => {
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
             <Server className="text-blue-500" /> My Devices
           </h1>
-          <p className="text-slate-500 text-sm mt-1">Manage and configure your PowerPulse hardware</p>
+          <p className="text-slate-500 dark:text-slate-500 text-sm mt-1">Manage and configure your PowerPulse hardware</p>
         </div>
         <button 
           onClick={() => setAddModalOpen(true)}
@@ -46,7 +46,7 @@ const DevicesList: React.FC = () => {
           <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full"></div>
         </div>
       ) : devices.length === 0 ? (
-        <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500">
+        <div className="flex flex-col items-center justify-center p-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-500">
           <Server className="w-16 h-16 mb-4 opacity-20" />
           <p className="text-lg">No devices found</p>
           <p className="text-sm mt-2">Click "Add Device" to register your first hardware.</p>
@@ -61,17 +61,17 @@ const DevicesList: React.FC = () => {
             >
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${device.onlineStatus ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${device.onlineStatus ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-800'}`}>
                     <Activity className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-semibold text-slate-900 dark:text-white group-hover:text-blue-500 transition-colors">
                       {device.name || device.macAddress}
                     </h3>
-                    <p className="text-xs text-slate-500 font-mono">{device.macAddress}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-500 font-mono">{device.macAddress}</p>
                   </div>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${device.onlineStatus ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${device.onlineStatus ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
                   {device.onlineStatus ? 'Online' : 'Offline'}
                 </div>
               </div>
@@ -100,3 +100,4 @@ const DevicesList: React.FC = () => {
 };
 
 export default DevicesList;
+
