@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.png';
 import energy1Image from '../../assets/energy1.png';
+import energy2Image from '../../assets/energy2.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -17,7 +18,8 @@ const Home: React.FC = () => {
     {
       title: 'Smart Automation',
       desc: 'Set up rules to automatically turn off devices when rooms are empty or during peak hours.',
-      icon: '🤖'
+      icon: '🤖',
+      image: energy2Image
     },
     {
       title: 'Device Control',
