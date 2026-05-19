@@ -89,3 +89,11 @@ bool MqttClient::publishProvisioningAck(const char* macAddress) {
   snprintf(topic, sizeof(topic), "bems/%s/provisioning/ack", macAddress);
   return publish(topic, "{\"status\":\"provisioned\"}");
 }
+
+bool MqttClient::publishEnergy(const char* macAddress, float energyKwh) {
+  char topic[64];
+  snprintf(topic, sizeof(topic), "bems/%s/telemetry", macAddress);
+  char payload[128];
+  snprintf(payload, sizeof(payload), "{\"energy_kwh\":%.3f}", energyKwh);
+  return publish(topic, payload);
+}
