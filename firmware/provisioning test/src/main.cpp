@@ -364,24 +364,41 @@ void loop() {
       // Publish random energy every minute
       if (millis() - lastTelemetryTime >= TELEMETRY_INTERVAL_MS) {
         lastTelemetryTime = millis();
-        // Generate a random energy value. For example, between 0.05 and 0.5 kWh
-        float randomEnergy = random(50, 500) / 1000.0;
-        
-        String mac = WifiManager::getMacAddress();
-        mac.replace(":", "");
           
+          String mac = WifiManager::getMacAddress();
+          mac.replace(":", "");
+          
+          // Generate a JSON array payload for exactly 3 mock channels
+          char payload[512];
+          snprintf(payload, sizeof(payload), 
+            "{\"channels\":["
+              "{\"id\":1, \"energy_wh\":%.1f, \"avg_power_w\":%.1f},"
+              "{\"id\":2, \"energy_wh\":%.1f, \"avg_power_w\":%.1f},"
+              "{\"id\":3, \"energy_wh\":%.1f, \"avg_power_w\":%.1f}"
+            "]}", 
+            random(500, 1500) / 10.0, random(10, 100) / 1.0,
+            random(50, 800) / 10.0, random(5, 50) / 1.0,
+            random(10, 500) / 10.0, random(1, 30) / 1.0
+          );
+            
           Serial.printf("\n[Main] ------ MINUTE TICK ------\n");
           Serial.printf("[Main] Generating & Sending telemetry for MAC: %s\n", mac.c_str());
-          Serial.printf("[Main] Random Energy Generated: %.3f kWh\n", randomEnergy);
+          Serial.printf("[Main] JSON Payload: %s\n", payload);
           
-          bool success = MqttClient::publishEnergy(mac.c_str(), randomEnergy);
-          
-          if (success) {
-            Serial.println("[Main] Telemetry data successfully handed off to MQTT Broker!");
-          } else {
-            Serial.println("[Main] Failed to send telemetry data to MQTT Broker.");
-          }
-          Serial.println("[Main] --------------------------\n");
+          bool success = MqttClient::publishTelemetry(mac.c_str(), payload);
+          Serial.println("[Main] Telemetry data successfully handed off to MQTT Broker!");
+        } else {
+          Serial.println("[Main] Failed to send telemetry data to MQTT Broker.");
+        }
+        Serial.println("[Main] --------------------------\n");
+      }
+      
+      // Check WiFi health
+      if (!WifiManager::isConnected()) {
+        Serial.println("[Main] WiFi lost! Attempting reconnect...");
+        currentState = DeviceState::WIFI_CONNECTING;
+        connectWithStoredConfig();
+      }
       break;
 
     case DeviceState::RECOVERY:

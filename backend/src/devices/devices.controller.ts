@@ -69,4 +69,31 @@ export class DevicesController {
   activate(@Param('id') id: string, @Request() req: any) {
     return this.devicesService.activate(id, req.user.userId);
   }
+
+  /**
+   * Add a breaker to a device.
+   * POST /devices/:id/breakers
+   */
+  @Post(':id/breakers')
+  addBreaker(@Param('id') id: string, @Body() dto: { label: string; phase?: string }, @Request() req: any) {
+    return this.devicesService.addBreaker(id, req.user.userId, dto.label, dto.phase);
+  }
+
+  /**
+   * Remove a breaker from a device.
+   * DELETE /devices/:id/breakers/:breakerId
+   */
+  @Delete(':id/breakers/:breakerId')
+  removeBreaker(@Param('id') id: string, @Param('breakerId') breakerId: string, @Request() req: any) {
+    return this.devicesService.removeBreaker(id, breakerId, req.user.userId);
+  }
+
+  /**
+   * Update a breaker on a device.
+   * PATCH /devices/:id/breakers/:breakerId
+   */
+  @Post(':id/breakers/:breakerId')
+  updateBreaker(@Param('id') id: string, @Param('breakerId') breakerId: string, @Body() dto: { label?: string; phase?: string }, @Request() req: any) {
+    return this.devicesService.updateBreaker(id, breakerId, req.user.userId, dto.label, dto.phase);
+  }
 }

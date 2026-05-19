@@ -210,4 +210,79 @@ export class DevicesService {
     this.logger.log(`Device ${deviceId} activated by user ${userId}`);
     return updated;
   }
+
+  /**
+   * Add a breaker to a device
+   */
+  async addBreaker(deviceId: string, userId: string, label: string, phase?: string) {
+    const device = await this.prisma.device.findUnique({ where: { id: deviceId } });
+    if (!device) throw new NotFoundException(`Device not found`);
+    if (device.userId !== userId) throw new ConflictException('You do not own this device');
+    
+    // Check if user has a default building/panel, if not create one
+    let panel = await this.prisma.panel.findFirst({
+        where: { building: { name: 'Default Building' } }
+    });
+    if (!panel) {
+        const building = await this.prisma.building.create({
+            data: { name: 'Default Building', address: 'Auto-generated' }
+        });
+        panel = await this.prisma.panel.create({
+            data: { name: 'Default Panel', buildingId: building.id }
+        });
+    }
+
+    const breaker = await this.prisma.breaker.create({
+      data: {
+        label,
+        phase: phase || null,
+        deviceId,
+        panelId: panel.id
+      }
+    });
+
+    this.logger.log(`Added breaker ${breaker.id} to device ${deviceId}`);
+    return breaker;
+  }
+
+  /**
+   * Remove a breaker
+   */
+  async removeBreaker(deviceId: string, breakerId: string, userId: string) {
+    const device = await this.prisma.device.findUnique({ where: { id: deviceId } });
+    if (!device) throw new NotFoundException(`Device not found`);
+    if (device.userId !== userId) throw new ConflictException('You do not own this device');
+
+    const breaker = await this.prisma.breaker.findUnique({ where: { id: breakerId } });
+    if (!breaker || breaker.deviceId !== deviceId) throw new NotFoundException('Breaker not found on this device');
+
+    await this.prisma.energyReading.deleteMany({ where: { breakerId } });
+    await this.prisma.breaker.delete({ where: { id: breakerId } });
+    
+    this.logger.log(`Removed breaker ${breakerId} from device ${deviceId}`);
+    return { success: true };
+  }
+
+  /**
+   * Update a breaker
+   */
+  async updateBreaker(deviceId: string, breakerId: string, userId: string, label?: string, phase?: string) {
+    const device = await this.prisma.device.findUnique({ where: { id: deviceId } });
+    if (!device) throw new NotFoundException(`Device not found`);
+    if (device.userId !== userId) throw new ConflictException('You do not own this device');
+
+    const breaker = await this.prisma.breaker.findUnique({ where: { id: breakerId } });
+    if (!breaker || breaker.deviceId !== deviceId) throw new NotFoundException('Breaker not found on this device');
+
+    const updated = await this.prisma.breaker.update({
+      where: { id: breakerId },
+      data: {
+        ...(label !== undefined ? { label } : {}),
+        ...(phase !== undefined ? { phase } : {})
+      }
+    });
+
+    this.logger.log(`Updated breaker ${breakerId} on device ${deviceId}`);
+    return updated;
+  }
 }

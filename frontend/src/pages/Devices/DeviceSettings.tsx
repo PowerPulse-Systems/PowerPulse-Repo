@@ -111,7 +111,33 @@ const DeviceSettings: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Breakers</h2>
-              <button className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">Add Breaker</button>
+              <button 
+                onClick={async () => {
+                  const label = prompt('Enter a label for the new breaker (e.g., Main AC):');
+                  if (label) {
+                    try {
+                      const token = localStorage.getItem('token');
+                      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/devices/${id}/breakers`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ label, phase: 'L1' })
+                      });
+                      // Reload device
+                      const res = await devicesApi.getDevice(id!);
+                      setDevice(res.data);
+                    } catch (err) {
+                      console.error('Failed to add breaker', err);
+                      alert('Failed to add breaker');
+                    }
+                  }
+                }}
+                className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Add Breaker
+              </button>
             </div>
             
             {device.breakers && device.breakers.length > 0 ? (
@@ -119,18 +145,44 @@ const DeviceSettings: React.FC = () => {
                 {device.breakers.map((breaker: any) => (
                   <div key={breaker.id} className="flex justify-between items-center p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-white">{breaker.name}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-500 font-mono">Pin: {breaker.hardwarePin}</div>
+                      <div className="font-medium text-slate-900 dark:text-white">{breaker.label || breaker.name || 'Unnamed Breaker'}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500 font-mono">Phase: {breaker.phase || 'N/A'}</div>
                     </div>
-                    <button 
-                      onClick={() => {
-                        setSelectedBreaker({ id: breaker.id, name: breaker.name });
-                        setEnergyModalOpen(true);
-                      }}
-                      className="px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 rounded-lg flex items-center gap-1.5 transition-colors"
-                    >
-                      <Zap className="w-3.5 h-3.5" /> View Data
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button 
+                        onClick={() => {
+                          setSelectedBreaker({ id: breaker.id, name: breaker.label || breaker.name || 'Unnamed Breaker' });
+                          setEnergyModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 rounded-lg flex items-center gap-1.5 transition-colors"
+                      >
+                        <Zap className="w-3.5 h-3.5" /> View Data
+                      </button>
+                      <button 
+                        onClick={async () => {
+                          if (window.confirm('Are you sure you want to delete this breaker? All its historical energy data will be lost.')) {
+                            try {
+                              const token = localStorage.getItem('token');
+                              await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/devices/${id}/breakers/${breaker.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                  'Authorization': `Bearer ${token}`
+                                }
+                              });
+                              // Reload device
+                              const res = await devicesApi.getDevice(id!);
+                              setDevice(res.data);
+                            } catch (err) {
+                              console.error('Failed to delete breaker', err);
+                              alert('Failed to delete breaker');
+                            }
+                          }
+                        }}
+                        className="px-2 py-1.5 text-xs font-medium bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 rounded-lg flex items-center transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
