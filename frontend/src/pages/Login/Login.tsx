@@ -82,7 +82,7 @@ const Login: React.FC = () => {
           className="absolute inset-0 bg-cover bg-center z-0 opacity-100 dark:opacity-40 transition-opacity"
           style={{ backgroundImage: `url("${sidePaneImage}")` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-white/90 via-white/80 to-transparent dark:from-slate-950/90 dark:via-slate-950/60 dark:to-transparent z-0 transition-colors duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-white/15 to-transparent dark:from-slate-950/90 dark:via-slate-950/60 dark:to-transparent z-0 transition-colors duration-300 pointer-events-none" />
         
         {/* Content */}
         <div className="z-10 flex flex-col items-center p-12 text-center">
