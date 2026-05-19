@@ -17,6 +17,8 @@
  */
 
 #include <Arduino.h>
+#include "soc/soc.h"             // Required for brownout disabling
+#include "soc/rtc_cntl_reg.h"    // Required for brownout disabling
 #include "config.h"
 #include "nvs_config.h"
 #include "led_status.h"
@@ -212,12 +214,16 @@ void connectWithStoredConfig() {
 // Arduino Setup
 // ========================
 void setup() {
+  // Disable the brownout detector to prevent resets on weak USB power lines
+  WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); 
+  
   Serial.begin(115200);
   delay(1000);
   Serial.println("\n========================================");
   Serial.println("  PowerPulse ESP32 — Provisioning FW");
   Serial.println("  Two-Phase Commit Architecture");
   Serial.println("========================================");
+  Serial.println("[Main] Brownout detector disabled for dev stability.");
 
   LedStatus::init();
   NvsConfig::init();
@@ -264,7 +270,19 @@ void loop() {
         BleProvisioning::sendStatus("WIFI_CONNECTING");
         LedStatus::wifiConnecting();
 
-        if (WifiManager::connect(provSsid.c_str(), provPass.c_str())) {
+        bool wifiConnected = false;
+        for (int i = 0; i < WIFI_MAX_RETRIES; i++) {
+          if (WifiManager::connect(provSsid.c_str(), provPass.c_str())) {
+            wifiConnected = true;
+            break;
+          }
+          Serial.printf("[Main] WiFi test attempt %d/%d failed\n", i + 1, WIFI_MAX_RETRIES);
+          if (i < WIFI_MAX_RETRIES - 1) {
+            delay(2000);
+          }
+        }
+
+        if (wifiConnected) {
           BleProvisioning::sendStatus("WIFI_CONNECTED");
           Serial.println("[Main] WiFi test passed");
           

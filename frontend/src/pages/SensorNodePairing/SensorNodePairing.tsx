@@ -3,7 +3,7 @@ import React from 'react';
 const SensorNodePairing: React.FC = () => {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-slate-100">Sensor Node Pairing</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Sensor Node Pairing</h1>
       <p className="text-slate-400">Register environmental and occupancy sensors.</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

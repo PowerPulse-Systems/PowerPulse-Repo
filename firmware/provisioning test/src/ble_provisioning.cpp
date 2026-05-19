@@ -82,7 +82,14 @@ class ProvisionWriteCallback : public BLECharacteristicCallbacks {
     const char* wifiPass   = doc["wifi_password"]  | "";
     const char* backendUrl = doc["backend_url"]    | "";
     const char* deviceId   = doc["device_id"]      | "";
-    const char* mqttHost   = doc["mqtt_host"]      | "";
+    const char* mqttHostRaw   = doc["mqtt_host"]      | "";
+    String mqttHostStr = String(mqttHostRaw);
+    int colonIndex = mqttHostStr.indexOf(':');
+    if (colonIndex > 0) {
+      mqttHostStr = mqttHostStr.substring(0, colonIndex);
+    }
+    const char* mqttHost = mqttHostStr.c_str();
+
     uint16_t    mqttPort   = doc["mqtt_port"]      | 1883;
     const char* mqttUser   = doc["mqtt_username"]   | "";
     const char* mqttPass   = doc["mqtt_password"]   | "";

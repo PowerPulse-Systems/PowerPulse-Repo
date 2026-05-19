@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -60,30 +61,41 @@ const Home: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      <section 
+        className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden"
+        style={{
+          backgroundImage: `url(${geminiImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/60 pointer-events-none"></div>
+        
         {/* Background Glow Accents */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-600/10 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <div className="inline-block mb-6 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-medium">
+          <div className="inline-block mb-6 px-4 py-1.5 rounded-full border border-blue-300 bg-blue-600/40 text-white text-sm font-medium shadow-lg">
             🚀 Version 2.0 is now live
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-white">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             Smart Building <br className="hidden md:block" />
-            <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Energy Management</span>
+            <span className="bg-gradient-to-r from-cyan-300 to-emerald-300 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Energy Management</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-white mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-medium">
             Industrial-grade dashboard for precise energy tracking, automated device control, and real-time anomaly detection. Identify waste and optimize efficiency.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center">
-              Go to Dashboard
+            <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/50 drop-shadow-lg flex items-center justify-center">
+              Sign Up
               <span className="ml-2">→</span>
             </Link>
-            <a href="#features" className="w-full sm:w-auto px-8 py-4 bg-slate-800 text-slate-300 font-semibold rounded-lg hover:bg-slate-700 transition-all border border-slate-700 flex items-center justify-center">
-              View Features
-            </a>
+            <div className="hidden sm:block text-white font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-lg">or</div>
+            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-500 transition-all drop-shadow-lg flex items-center justify-center shadow-lg shadow-emerald-600/50">
+              Login
+            </Link>
           </div>
         </div>
       </section>
