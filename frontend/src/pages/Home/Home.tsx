@@ -114,15 +114,18 @@ const Home: React.FC = () => {
             {features.map((feature) => (
               <div
                 key={feature.title}
-                className="bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 hover:bg-slate-800 transition-colors group overflow-hidden"
+                className="relative bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 hover:bg-slate-800 transition-colors group overflow-hidden"
                 style={feature.image ? { backgroundImage: `url(${feature.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
               >
-                <div className="text-4xl mb-6 bg-slate-900/80 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-700 group-hover:border-blue-500/50 transition-colors">
-                  {feature.icon}
-                </div>
-                <div className="bg-black/60 p-4 rounded-2xl">
-                  <h3 className="text-xl font-semibold text-slate-100 mb-3">{feature.title}</h3>
-                  <p className="text-slate-200 text-sm leading-relaxed">{feature.desc}</p>
+                {feature.image && <div className="absolute inset-0 bg-black/75" />}
+                <div className="relative z-10">
+                  <div className="text-4xl mb-6 bg-slate-900/90 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-700 group-hover:border-blue-500/50 transition-colors">
+                    {feature.icon}
+                  </div>
+                  <div className="bg-black/80 p-4 rounded-2xl">
+                    <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                    <p className="text-slate-200 text-sm leading-relaxed">{feature.desc}</p>
+                  </div>
                 </div>
               </div>
             ))}
