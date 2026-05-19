@@ -5,7 +5,7 @@ const DeviceSetup: React.FC = () => {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-slate-100">Gateway Setup Wizard</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Gateway Setup Wizard</h1>
       <p className="text-slate-400">Configure your main ESP32 gateway and breakers.</p>
 
       <div className="flex space-x-2 mb-8">
