@@ -58,6 +58,15 @@ export class MqttService implements OnModuleInit {
         }
       });
 
+      // Subscribe to new device telemetry topic
+      this.client.subscribe('bems/+/telemetry', (err) => {
+        if (err) {
+          this.logger.error('Failed to subscribe to esp telemetry topics', err);
+        } else {
+          this.logger.log('Subscribed to topics: bems/+/telemetry');
+        }
+      });
+
       // Subscribe to device status topics (connect/disconnect)
       this.client.subscribe('bems/+/status', (err) => {
         if (err) {
@@ -94,6 +103,14 @@ export class MqttService implements OnModuleInit {
     
     try {
       const parts = topic.split('/');
+
+      // Handle esp telemetry: bems/{macAddress}/telemetry
+      if (parts.length === 3 && parts[2] === 'telemetry') {
+        const macAddress = parts[1];
+        const payload = JSON.parse(message);
+        this.telemetryService.processDeviceTelemetry(macAddress, payload);
+        return;
+      }
 
       // Handle telemetry: bems/{buildingId}/{deviceId}/current
       if (parts.length === 4 && parts[3] === 'current') {
