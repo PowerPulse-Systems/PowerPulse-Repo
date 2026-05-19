@@ -14,7 +14,7 @@ const SwitchNodePairing: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-slate-100">Switch Node Pairing</h1>
+      <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Switch Node Pairing</h1>
       <p className="text-slate-400">Discover and configure remote control relays (Switches, AC IR nodes).</p>
 
       <div className="bg-slate-900 border border-slate-800 p-6 rounded-xl shadow-sm mb-6">

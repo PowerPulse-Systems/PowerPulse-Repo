@@ -19,7 +19,7 @@ const Alerts: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-slate-100">Alerts & Diagnostics</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Alerts & Diagnostics</h1>
         <button className="px-4 py-2 bg-slate-800 text-sm border border-slate-700 rounded hover:bg-slate-700">Alert Settings</button>
       </div>
 
