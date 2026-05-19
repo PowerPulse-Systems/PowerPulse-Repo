@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -60,7 +61,14 @@ const Home: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      <section 
+        className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden"
+        style={{
+          backgroundImage: `url(${geminiImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         {/* Background Glow Accents */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-600/10 blur-[100px] rounded-full pointer-events-none"></div>
