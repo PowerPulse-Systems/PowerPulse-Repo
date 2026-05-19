@@ -77,13 +77,14 @@ const Home: React.FC = () => {
             Industrial-grade dashboard for precise energy tracking, automated device control, and real-time anomaly detection. Identify waste and optimize efficiency.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center">
-              Go to Dashboard
+            <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center">
+              Sign Up
               <span className="ml-2">→</span>
             </Link>
-            <a href="#features" className="w-full sm:w-auto px-8 py-4 bg-slate-800 text-slate-300 font-semibold rounded-lg hover:bg-slate-700 transition-all border border-slate-700 flex items-center justify-center">
-              View Features
-            </a>
+            <div className="hidden sm:block text-slate-400 font-semibold">or</div>
+            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-slate-800 text-slate-300 font-semibold rounded-lg hover:bg-slate-700 transition-all border border-slate-700 flex items-center justify-center">
+              Login
+            </Link>
           </div>
         </div>
       </section>
