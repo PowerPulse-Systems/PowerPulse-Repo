@@ -5,6 +5,7 @@ import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.pn
 import energy1Image from '../../assets/energy1.png';
 import energy2Image from '../../assets/energy2.png';
 import energy3Image from '../../assets/energy3.png';
+import energy4Image from '../../assets/energy4.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -31,7 +32,8 @@ const Home: React.FC = () => {
     {
       title: 'Alerts & Analytics',
       desc: 'Get notified of anomalies like overcurrents and analyze peak usage heatmaps.',
-      icon: '📊'
+      icon: '📊',
+      image: energy4Image
     }
   ];
 
