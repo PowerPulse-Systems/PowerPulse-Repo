@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import sidePaneImage from '../../assets/login side pane.png';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,17 +22,11 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/login`, {
-        email,
-        password
-      });
-      
-      // Store token and user data
-      localStorage.setItem('token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+      await login(email, password);
+      // The context now has the user state, so GuestRoute handles the redirect automatically
+      // or we can explicitly steer it:
       navigate('/dashboard');
-    } catch (err: unknown) {
+    } catch (err: any) {
       if (axios.isAxiosError(err)) {
         if (!err.response) {
           // No response from server (Network Error / Server Offline)
@@ -44,7 +40,7 @@ const Login: React.FC = () => {
         }
       } else {
         // Unknown JavaScript error
-        setError('An unexpected error occurred. Please try again.');
+        setError(err?.response?.data?.message || 'An unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
