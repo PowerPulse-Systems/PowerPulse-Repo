@@ -41,7 +41,7 @@ const DeviceSettings: React.FC = () => {
 
   if (!device) {
     return (
-      <div className="text-center text-slate-500 p-12">
+      <div className="text-center text-slate-500 dark:text-slate-500 p-12">
         Device not found
       </div>
     );
@@ -62,7 +62,7 @@ const DeviceSettings: React.FC = () => {
             <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3">
               Device Settings
             </h1>
-            <p className="text-sm text-slate-500 font-mono mt-0.5">{device.macAddress}</p>
+            <p className="text-sm text-slate-500 dark:text-slate-500 font-mono mt-0.5">{device.macAddress}</p>
           </div>
         </div>
         
@@ -115,13 +115,13 @@ const DeviceSettings: React.FC = () => {
                   <div key={breaker.id} className="flex justify-between items-center p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                     <div>
                       <div className="font-medium text-slate-900 dark:text-white">{breaker.name}</div>
-                      <div className="text-xs text-slate-500 font-mono">Pin: {breaker.hardwarePin}</div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500 font-mono">Pin: {breaker.hardwarePin}</div>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-500 text-sm">
+              <div className="text-center py-8 text-slate-500 dark:text-slate-500 text-sm">
                 No breakers configured for this device yet.
               </div>
             )}
@@ -134,14 +134,14 @@ const DeviceSettings: React.FC = () => {
             <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Status</h2>
             
             <div className="flex items-center gap-3 mb-6">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${device.onlineStatus ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${device.onlineStatus ? 'bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400' : 'bg-slate-100 text-slate-600 dark:text-slate-400 dark:bg-slate-800'}`}>
                 <Activity className="w-6 h-6" />
               </div>
               <div>
-                <div className={`text-sm font-bold uppercase tracking-wider ${device.onlineStatus ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                <div className={`text-sm font-bold uppercase tracking-wider ${device.onlineStatus ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-500 dark:text-slate-400'}`}>
                   {device.onlineStatus ? 'Online' : 'Offline'}
                 </div>
-                <div className="text-xs text-slate-500 mt-0.5">
+                <div className="text-xs text-slate-500 dark:text-slate-500 mt-0.5">
                   Last seen: {device.lastSeen ? new Date(device.lastSeen).toLocaleString() : 'Never'}
                 </div>
               </div>
@@ -149,15 +149,15 @@ const DeviceSettings: React.FC = () => {
 
             <div className="space-y-3 text-sm">
               <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-slate-500">Type</span>
+                <span className="text-slate-500 dark:text-slate-500">Type</span>
                 <span className="font-medium text-slate-900 dark:text-white uppercase">{device.type}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-                <span className="text-slate-500">Firmware</span>
+                <span className="text-slate-500 dark:text-slate-500">Firmware</span>
                 <span className="font-medium text-slate-900 dark:text-white">{device.firmwareVersion || 'Unknown'}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-slate-500">Registered</span>
+                <span className="text-slate-500 dark:text-slate-500">Registered</span>
                 <span className="font-medium text-slate-900 dark:text-white">{new Date(device.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
@@ -169,3 +169,4 @@ const DeviceSettings: React.FC = () => {
 };
 
 export default DeviceSettings;
+
