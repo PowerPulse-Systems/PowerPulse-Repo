@@ -46,7 +46,7 @@ const Home: React.FC = () => {
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">
               ⚡
             </div>
-            <div className="text-xl font-bold text-white tracking-tight">PowerPulse</div>
+            <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">PowerPulse</div>
           </div>
           <nav className="space-x-4 flex items-center">
             {isAuthenticated ? (
