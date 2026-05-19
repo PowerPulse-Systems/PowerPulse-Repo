@@ -79,13 +79,14 @@ const Login: React.FC = () => {
       <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-slate-50 dark:bg-slate-800 relative overflow-hidden transition-colors duration-300">
         {/* Background Image with Overlay */}
         <div 
-          className="absolute inset-0 bg-cover bg-center z-0 opacity-100 dark:opacity-40 transition-opacity blur-sm dark:blur-none"
+          className="absolute inset-0 bg-cover bg-center z-0 opacity-100 dark:opacity-40 transition-opacity"
           style={{ backgroundImage: `url("${sidePaneImage}")` }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-white/20 to-transparent dark:from-slate-950/90 dark:via-slate-950/60 dark:to-transparent z-0 transition-colors duration-300 pointer-events-none" />
         
         {/* Content */}
-        <div className="z-10 flex flex-col items-center p-12 text-center">
+        <div className="z-10 relative flex flex-col items-center p-12 text-center">
+          <div className="absolute inset-0 m-6 rounded-2xl bg-white/40 backdrop-blur-xl border border-white/30 dark:bg-slate-950/50 dark:border-slate-700/40 -z-10" />
           <h1 className="text-4xl font-black text-slate-950 dark:text-cyan-300 mb-4 tracking-tight drop-shadow-[0_10px_18px_rgba(0,0,0,0.35)]">
             PowerPulse
           </h1>
