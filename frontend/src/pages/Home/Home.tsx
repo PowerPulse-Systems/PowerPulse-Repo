@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.png';
 import energy1Image from '../../assets/energy1.png';
 import energy2Image from '../../assets/energy2.png';
+import energy3Image from '../../assets/energy3.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -24,7 +25,8 @@ const Home: React.FC = () => {
     {
       title: 'Device Control',
       desc: 'Remotely toggle switches, AC units, and lights directly from your dashboard.',
-      icon: '🎛️'
+      icon: '🎛️',
+      image: energy3Image
     },
     {
       title: 'Alerts & Analytics',
