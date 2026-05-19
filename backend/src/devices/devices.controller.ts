@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
@@ -50,6 +50,15 @@ export class DevicesController {
   @Post(':id/reset')
   reset(@Param('id') id: string, @Request() req: any) {
     return this.devicesService.reset(id, req.user.userId);
+  }
+
+  /**
+   * Delete a device from the database entirely.
+   * DELETE /devices/:id
+   */
+  @Delete(':id')
+  delete(@Param('id') id: string, @Request() req: any) {
+    return this.devicesService.delete(id, req.user.userId);
   }
 
   /**

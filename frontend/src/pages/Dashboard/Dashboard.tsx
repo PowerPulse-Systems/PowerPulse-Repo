@@ -42,7 +42,7 @@ const Dashboard: React.FC = () => {
   if (!activeDeviceId) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="text-slate-500">Please select a device from the topbar to view its dashboard.</div>
+        <div className="text-slate-500 dark:text-slate-500">Please select a device from the topbar to view its dashboard.</div>
       </div>
     );
   }

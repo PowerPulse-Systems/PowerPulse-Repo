@@ -57,4 +57,52 @@ export class TelemetryService {
       this.logger.error(`Error processing telemetry: ${(error as Error).message}`);
     }
   }
+
+  async processDeviceTelemetry(macAddress: string, payload: any) {
+    try {
+      this.logger.log(`Processing ESP telemetry for ${macAddress}:`, payload);
+      
+      const device = await this.prisma.device.findUnique({
+        where: { macAddress: macAddress },
+        include: { breakers: true }
+      });
+
+      if (!device) {
+         this.logger.warn(`Device ${macAddress} not found in DB`);
+         return;
+      }
+
+      if (device.breakers.length === 0) {
+         this.logger.warn(`Device ${macAddress} has no attached breakers`);
+         return;
+      }
+      
+      const breaker = device.breakers[0];
+
+      // Store minute-wise block based on current time of reception
+      // Automatically tracks the exact exact time so it corresponds to your local time perfectly.
+      const currentTimeUnix = Math.floor(Date.now() / 1000);
+      const startTimeUnix = currentTimeUnix - 60; // Represents the 1-minute window
+
+      if (payload.energy_kwh !== undefined) {
+        // Convert kwh to watt-hours (wh) for storage
+        const energyWh = payload.energy_kwh * 1000;
+
+        await this.prisma.energyReading.create({
+          data: {
+            breakerId: breaker.id,
+            periodStart: startTimeUnix,
+            periodEnd: currentTimeUnix,
+            energyWh: energyWh,
+            avgPowerW: 0, // Fallback if ESP doesn't provide
+            peakPowerW: 0, // Fallback if ESP doesn't provide
+          }
+        });
+        
+        this.logger.log(`Saved minute-wise ESP energy reading for ${macAddress} / breaker ${breaker.id}`);
+      }
+    } catch (error) {
+      this.logger.error(`Error processing ESP telemetry: ${(error as Error).message}`);
+    }
+  }
 }

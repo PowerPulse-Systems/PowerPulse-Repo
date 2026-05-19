@@ -55,6 +55,8 @@ export const devicesApi = {
     api.post('/devices/claim', { deviceId }),
   resetDevice: (id: string) =>
     api.post(`/devices/${id}/reset`),
+  deleteDevice: (id: string) =>
+    api.delete(`/devices/${id}`),
 };
 
 // ========================

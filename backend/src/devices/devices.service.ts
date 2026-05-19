@@ -115,6 +115,54 @@ export class DevicesService {
   }
 
   /**
+   * Delete a device from the database including its relations.
+   */
+  async delete(deviceId: string, userId: string) {
+    const device = await this.prisma.device.findUnique({
+      where: { id: deviceId },
+      include: { breakers: true },
+    });
+
+    if (!device) {
+      throw new NotFoundException(`Device ${deviceId} not found`);
+    }
+
+    if (device.userId !== userId) {
+      throw new ConflictException('You do not own this device');
+    }
+
+    const dashboard = await this.prisma.dashboard.findUnique({
+      where: { deviceId },
+    });
+
+    if (dashboard) {
+      await this.prisma.widget.deleteMany({
+        where: { dashboardId: dashboard.id },
+      });
+      await this.prisma.dashboard.delete({
+        where: { id: dashboard.id },
+      });
+    }
+
+    const breakerIds = device.breakers.map(b => b.id);
+    if (breakerIds.length > 0) {
+      await this.prisma.energyReading.deleteMany({
+        where: { breakerId: { in: breakerIds } },
+      });
+      await this.prisma.breaker.deleteMany({
+        where: { deviceId },
+      });
+    }
+
+    await this.prisma.device.delete({
+      where: { id: deviceId },
+    });
+
+    this.logger.log(`Device ${deviceId} fully deleted by user ${userId}`);
+    return { success: true, message: 'Device deleted' };
+  }
+
+  /**
    * Update device online status (called from MQTT service).
    */
   async updateStatus(macAddress: string, online: boolean) {
