@@ -39,11 +39,15 @@ class _ConfigurePageState extends State<ConfigurePage> {
     // Default device name to something sensible
     _nameController.text = '${widget.device.name} Device';
     
-    // Pre-fill MQTT settings from .env
-    _mqttHostController.text = dotenv.env['MQTT_HOST'] ?? '';
-    _mqttPortController.text = dotenv.env['MQTT_PORT'] ?? '1883';
-    _mqttUserController.text = dotenv.env['MQTT_USERNAME'] ?? '';
-    _mqttPassController.text = dotenv.env['MQTT_PASSWORD'] ?? '';
+    // Pre-fill test WiFi configuration
+    _ssidController.text = 'cloud9';
+    _passwordController.text = '12345678';
+    
+    // Pre-fill test MQTT settings
+    _mqttHostController.text = '53f049e94d53425088c3cabd38fe8a00.s1.eu.hivemq.cloud';
+    _mqttPortController.text = '8883';
+    _mqttUserController.text = 'devicetest';
+    _mqttPassController.text = 'Jagath123';
   }
 
   @override
