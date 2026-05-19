@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -60,7 +61,14 @@ const Home: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      <section 
+        className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden"
+        style={{
+          backgroundImage: `url(${geminiImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
         {/* Background Glow Accents */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-600/10 blur-[100px] rounded-full pointer-events-none"></div>
@@ -77,13 +85,14 @@ const Home: React.FC = () => {
             Industrial-grade dashboard for precise energy tracking, automated device control, and real-time anomaly detection. Identify waste and optimize efficiency.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center">
-              Go to Dashboard
+            <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center">
+              Sign Up
               <span className="ml-2">→</span>
             </Link>
-            <a href="#features" className="w-full sm:w-auto px-8 py-4 bg-slate-800 text-slate-300 font-semibold rounded-lg hover:bg-slate-700 transition-all border border-slate-700 flex items-center justify-center">
-              View Features
-            </a>
+            <div className="hidden sm:block text-slate-400 font-semibold">or</div>
+            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-slate-800 text-slate-300 font-semibold rounded-lg hover:bg-slate-700 transition-all border border-slate-700 flex items-center justify-center">
+              Login
+            </Link>
           </div>
         </div>
       </section>
