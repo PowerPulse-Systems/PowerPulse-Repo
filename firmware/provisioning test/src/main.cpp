@@ -369,15 +369,19 @@ void loop() {
         
         String mac = WifiManager::getMacAddress();
         mac.replace(":", "");
-        MqttClient::publishEnergy(mac.c_str(), randomEnergy);
-      }
-      
-      // Check WiFi health
-      if (!WifiManager::isConnected()) {
-        Serial.println("[Main] WiFi lost! Attempting reconnect...");
-        currentState = DeviceState::WIFI_CONNECTING;
-        connectWithStoredConfig();
-      }
+          
+          Serial.printf("\n[Main] ------ MINUTE TICK ------\n");
+          Serial.printf("[Main] Generating & Sending telemetry for MAC: %s\n", mac.c_str());
+          Serial.printf("[Main] Random Energy Generated: %.3f kWh\n", randomEnergy);
+          
+          bool success = MqttClient::publishEnergy(mac.c_str(), randomEnergy);
+          
+          if (success) {
+            Serial.println("[Main] Telemetry data successfully handed off to MQTT Broker!");
+          } else {
+            Serial.println("[Main] Failed to send telemetry data to MQTT Broker.");
+          }
+          Serial.println("[Main] --------------------------\n");
       break;
 
     case DeviceState::RECOVERY:

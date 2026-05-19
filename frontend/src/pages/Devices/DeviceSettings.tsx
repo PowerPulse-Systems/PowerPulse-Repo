@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { devicesApi } from '../../services/api';
-import { ArrowLeft, Server, Activity, Save } from 'lucide-react';
+import { ArrowLeft, Server, Activity, Save, Zap } from 'lucide-react';
+import EnergyModal from './EnergyModal';
 
 const DeviceSettings: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +12,10 @@ const DeviceSettings: React.FC = () => {
 
   // Form state
   const [name, setName] = useState('');
+  
+  // Energy Modal State
+  const [energyModalOpen, setEnergyModalOpen] = useState(false);
+  const [selectedBreaker, setSelectedBreaker] = useState<{id: string, name: string} | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -117,6 +122,15 @@ const DeviceSettings: React.FC = () => {
                       <div className="font-medium text-slate-900 dark:text-white">{breaker.name}</div>
                       <div className="text-xs text-slate-500 dark:text-slate-500 font-mono">Pin: {breaker.hardwarePin}</div>
                     </div>
+                    <button 
+                      onClick={() => {
+                        setSelectedBreaker({ id: breaker.id, name: breaker.name });
+                        setEnergyModalOpen(true);
+                      }}
+                      className="px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 rounded-lg flex items-center gap-1.5 transition-colors"
+                    >
+                      <Zap className="w-3.5 h-3.5" /> View Data
+                    </button>
                   </div>
                 ))}
               </div>
@@ -164,6 +178,14 @@ const DeviceSettings: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Modals */}
+      <EnergyModal 
+        isOpen={energyModalOpen} 
+        onClose={() => setEnergyModalOpen(false)} 
+        breakerId={selectedBreaker?.id}
+        breakerName={selectedBreaker?.name}
+      />
     </div>
   );
 };

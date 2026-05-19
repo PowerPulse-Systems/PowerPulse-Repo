@@ -76,16 +76,36 @@ export class TelemetryService {
          this.logger.warn(`Device ${macAddress} has no attached breakers`);
          return;
       }
-      
-      const breaker = device.breakers[0];
 
-      // Store minute-wise block based on current time of reception
-      // Automatically tracks the exact exact time so it corresponds to your local time perfectly.
       const currentTimeUnix = Math.floor(Date.now() / 1000);
       const startTimeUnix = currentTimeUnix - 60; // Represents the 1-minute window
 
-      if (payload.energy_kwh !== undefined) {
-        // Convert kwh to watt-hours (wh) for storage
+      // Handle array of breakers from structured JSON format
+      if (Array.isArray(payload.breakers)) {
+         for (const b of payload.breakers) {
+           // Match structured breaker info to DB breaker using a label, pin, or index
+           // For simplicity, we just grab by index if hardwarePin matches (if not we fallback)
+           const breakerRecord = device.breakers.find(db => db.hardwarePin?.toString() === b.id?.toString()) || device.breakers[0];
+
+           if (b.energy_kwh !== undefined) {
+             const energyWh = b.energy_kwh * 1000;
+             await this.prisma.energyReading.create({
+               data: {
+                 breakerId: breakerRecord.id,
+                 periodStart: startTimeUnix,
+                 periodEnd: currentTimeUnix,
+                 energyWh: energyWh,
+                 avgPowerW: b.avg_power_w || 0,
+                 peakPowerW: b.peak_power_w || 0,
+               }
+             });
+           }
+         }
+         this.logger.log(`Saved structured minute-wise ESP energy reading for ${macAddress}`);
+      } 
+      // Handle simple legacy payload { energy_kwh: X }
+      else if (payload.energy_kwh !== undefined) {
+        const breaker = device.breakers[0];
         const energyWh = payload.energy_kwh * 1000;
 
         await this.prisma.energyReading.create({
@@ -94,12 +114,12 @@ export class TelemetryService {
             periodStart: startTimeUnix,
             periodEnd: currentTimeUnix,
             energyWh: energyWh,
-            avgPowerW: 0, // Fallback if ESP doesn't provide
-            peakPowerW: 0, // Fallback if ESP doesn't provide
+            avgPowerW: 0,
+            peakPowerW: 0,
           }
         });
         
-        this.logger.log(`Saved minute-wise ESP energy reading for ${macAddress} / breaker ${breaker.id}`);
+        this.logger.log(`Saved basic minute-wise ESP energy reading for ${macAddress} / breaker ${breaker.id}`);
       }
     } catch (error) {
       this.logger.error(`Error processing ESP telemetry: ${(error as Error).message}`);
