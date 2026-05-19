@@ -270,7 +270,19 @@ void loop() {
         BleProvisioning::sendStatus("WIFI_CONNECTING");
         LedStatus::wifiConnecting();
 
-        if (WifiManager::connect(provSsid.c_str(), provPass.c_str())) {
+        bool wifiConnected = false;
+        for (int i = 0; i < WIFI_MAX_RETRIES; i++) {
+          if (WifiManager::connect(provSsid.c_str(), provPass.c_str())) {
+            wifiConnected = true;
+            break;
+          }
+          Serial.printf("[Main] WiFi test attempt %d/%d failed\n", i + 1, WIFI_MAX_RETRIES);
+          if (i < WIFI_MAX_RETRIES - 1) {
+            delay(2000);
+          }
+        }
+
+        if (wifiConnected) {
           BleProvisioning::sendStatus("WIFI_CONNECTED");
           Serial.println("[Main] WiFi test passed");
           

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app_links/app_links.dart';
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
 import 'services/ble_service.dart';
 import 'models/device.dart';
@@ -44,6 +45,10 @@ class AppState extends ChangeNotifier {
 
   void setAuth(String newToken) {
     token = newToken;
+    // Also save it to SharedPreferences out of the box when accessed via deep link
+    SharedPreferences.getInstance().then((prefs) {
+      prefs.setString('token', newToken);
+    });
     notifyListeners();
   }
 

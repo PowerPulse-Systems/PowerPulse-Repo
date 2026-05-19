@@ -142,10 +142,12 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
         'mqtt_password': widget.mqttPass,
       };
 
+      // Set up the listener BEFORE sending the data to avoid race conditions 
+      final receivedFuture = _waitForStatus('RECEIVED', const Duration(seconds: 10));
       await state.ble.provision(payload);
       
       // Wait for RECEIVED acknowledgment
-      final received = await _waitForStatus('RECEIVED', const Duration(seconds: 10));
+      final received = await receivedFuture;
       if (!received) {
         _updateStep(0, 'error');
         await _rollbackAndFail('ESP did not acknowledge the configuration payload.');
@@ -204,9 +206,11 @@ class _ProvisioningPageState extends State<ProvisioningPage> {
       // =======================================
       _updateStep(4, 'active');
       
+      // Listen BEFORE sending the command to ensure we don't miss the BLE notification
+      final provisionedFuture = _waitForStatus('PROVISIONED', const Duration(seconds: 15));
       await state.ble.sendCommand('COMMIT');
       
-      final provisioned = await _waitForStatus('PROVISIONED', const Duration(seconds: 15));
+      final provisioned = await provisionedFuture;
       if (!provisioned) {
         _updateStep(4, 'error');
         setState(() {
