@@ -322,31 +322,32 @@ void loop() {
       // Phase 2: Wait for app to confirm or deny
       if (commitRequested) {
         commitRequested = false;
-        Serial.println("[Main] COMMIT received — saving credentials to NVS permanently");
-        
-        // Save to NVS now
-        NvsConfig::store(
-          provSsid.c_str(), provPass.c_str(),
-          provBackendUrl.c_str(), provDeviceId.c_str(),
-          provMqttHost.c_str(), provMqttPort,
-          provMqttUser.c_str(), provMqttPass.c_str()
-        );
+          Serial.println("[Main] COMMIT received - saving credentials to NVS permanently");
+          BleProvisioning::sendStatus("COMMIT_START");
+          
+          // Save to NVS now
+          Serial.println("[Main] Calling NVS Store...");
+          NvsConfig::store(
+            provSsid.c_str(), provPass.c_str(),
+            provBackendUrl.c_str(), provDeviceId.c_str(),
+            provMqttHost.c_str(), provMqttPort,
+            provMqttUser.c_str(), provMqttPass.c_str()
+          );
+          Serial.println("[Main] NVS Store OK. Sending PROVISIONED to BLE...");
 
-        // Publish provisioning acknowledgment via MQTT
-        String mac = WifiManager::getMacAddress();
-        mac.replace(":", "");
-        MqttClient::publishProvisioningAck(mac.c_str());
-        MqttClient::publishStatus(mac.c_str(), true);
-
-        BleProvisioning::sendStatus("PROVISIONED");
-        Serial.println("[Main] Provisioning complete! Device is now permanently configured.");
-        
-        // Wait for the status notification to be sent, then stop BLE
-        delay(2000);
-        BleProvisioning::stop();
-        
-        currentState = DeviceState::NORMAL;
-        LedStatus::normalOperation();
+          BleProvisioning::sendStatus("PROVISIONED");
+  
+          // Publish provisioning acknowledgment via MQTT
+          Serial.println("[Main] Publishing MQTT Acks...");
+          String mac = WifiManager::getMacAddress();
+          mac.replace(":", "");
+          MqttClient::publishProvisioningAck(mac.c_str());
+          MqttClient::publishStatus(mac.c_str(), true);
+  
+          Serial.println("[Main] Provisioning complete! Device is now permanently configured.");
+          
+          // Wait for the status notification to be sent, then stop BLE
+          delay(3000);
         provisioningInProgress = false;
       }
       
