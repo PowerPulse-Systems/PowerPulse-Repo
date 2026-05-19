@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { devicesApi } from '../../services/api';
-import { Server, Activity, Plus } from 'lucide-react';
+import { Server, Activity, Plus, Trash2 } from 'lucide-react';
 import AddDeviceModal from '../../components/ui/AddDeviceModal';
 
 const DevicesList: React.FC = () => {
@@ -23,6 +23,19 @@ const DevicesList: React.FC = () => {
     };
     fetchDevices();
   }, []);
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!window.confirm("Are you sure you want to delete this device? This will also delete all associated energy readings and settings. This cannot be undone.")) return;
+    
+    try {
+      await devicesApi.deleteDevice(id);
+      setDevices(prev => prev.filter(d => d.id !== id));
+    } catch (err) {
+      console.error("Failed to delete device", err);
+      alert("Failed to delete device.");
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -71,8 +84,17 @@ const DevicesList: React.FC = () => {
                     <p className="text-xs text-slate-500 dark:text-slate-500 font-mono">{device.macAddress}</p>
                   </div>
                 </div>
-                <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${device.onlineStatus ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
-                  {device.onlineStatus ? 'Online' : 'Offline'}
+                <div className="flex items-center gap-2">
+                  <div className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${device.onlineStatus ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-slate-100 text-slate-500 dark:text-slate-500 dark:bg-slate-800 dark:text-slate-400'}`}>
+                    {device.onlineStatus ? 'Online' : 'Offline'}
+                  </div>
+                  <button 
+                    onClick={(e) => handleDelete(e, device.id)}
+                    className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors"
+                    title="Delete Device"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
               
