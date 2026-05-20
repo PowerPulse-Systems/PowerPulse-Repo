@@ -89,3 +89,9 @@ bool MqttClient::publishProvisioningAck(const char* macAddress) {
   snprintf(topic, sizeof(topic), "bems/%s/provisioning/ack", macAddress);
   return publish(topic, "{\"status\":\"provisioned\"}");
 }
+
+bool MqttClient::publishTelemetry(const char* macAddress, const char* jsonPayload) {
+  char topic[64];
+  snprintf(topic, sizeof(topic), "bems/%s/telemetry", macAddress);
+  return publish(topic, jsonPayload);
+}

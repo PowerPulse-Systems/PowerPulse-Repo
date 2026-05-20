@@ -1,6 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import geminiImage from '../../assets/Gemini_Generated_Image_fg4lf3fg4lf3fg4l.png';
+import energy1Image from '../../assets/energy1.png';
+import energy2Image from '../../assets/energy2.png';
+import energy3Image from '../../assets/energy3.png';
+import energy4Image from '../../assets/energy4.png';
 
 const Home: React.FC = () => {
   const { isAuthenticated, user } = useAuth();
@@ -9,22 +14,26 @@ const Home: React.FC = () => {
     {
       title: 'Energy Monitoring',
       desc: 'Track real-time power draw and historical usage across all breaker nodes.',
-      icon: '⚡'
+      icon: '⚡',
+      image: energy1Image
     },
     {
       title: 'Smart Automation',
       desc: 'Set up rules to automatically turn off devices when rooms are empty or during peak hours.',
-      icon: '🤖'
+      icon: '🤖',
+      image: energy2Image
     },
     {
       title: 'Device Control',
       desc: 'Remotely toggle switches, AC units, and lights directly from your dashboard.',
-      icon: '🎛️'
+      icon: '🎛️',
+      image: energy3Image
     },
     {
       title: 'Alerts & Analytics',
       desc: 'Get notified of anomalies like overcurrents and analyze peak usage heatmaps.',
-      icon: '📊'
+      icon: '📊',
+      image: energy4Image
     }
   ];
 
@@ -37,7 +46,7 @@ const Home: React.FC = () => {
             <div className="w-8 h-8 bg-blue-600 rounded flex items-center justify-center font-bold text-white">
               ⚡
             </div>
-            <div className="text-xl font-bold text-white tracking-tight">PowerPulse</div>
+            <div className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">PowerPulse</div>
           </div>
           <nav className="space-x-4 flex items-center">
             {isAuthenticated ? (
@@ -60,30 +69,41 @@ const Home: React.FC = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
+      <section 
+        className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden"
+        style={{
+          backgroundImage: `url(${geminiImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center'
+        }}
+      >
+        {/* Dark Overlay */}
+        <div className="absolute inset-0 bg-black/60 pointer-events-none"></div>
+        
         {/* Background Glow Accents */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/20 blur-[120px] rounded-full pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-emerald-600/10 blur-[100px] rounded-full pointer-events-none"></div>
 
         <div className="max-w-7xl mx-auto px-6 text-center relative z-10">
-          <div className="inline-block mb-6 px-4 py-1.5 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-400 text-sm font-medium">
+          <div className="inline-block mb-6 px-4 py-1.5 rounded-full border border-blue-300 bg-blue-600/40 text-white text-sm font-medium shadow-lg">
             🚀 Version 2.0 is now live
           </div>
-          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-white">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
             Smart Building <br className="hidden md:block" />
-            <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Energy Management</span>
+            <span className="bg-gradient-to-r from-cyan-300 to-emerald-300 bg-clip-text text-transparent drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">Energy Management</span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg md:text-xl text-white mb-10 max-w-2xl mx-auto leading-relaxed drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-medium">
             Industrial-grade dashboard for precise energy tracking, automated device control, and real-time anomaly detection. Identify waste and optimize efficiency.
           </p>
           <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center">
-              Go to Dashboard
+            <Link to="/signup" className="w-full sm:w-auto px-8 py-4 bg-cyan-500 text-white font-bold rounded-lg hover:bg-cyan-400 transition-all shadow-lg shadow-cyan-500/50 drop-shadow-lg flex items-center justify-center">
+              Sign Up
               <span className="ml-2">→</span>
             </Link>
-            <a href="#features" className="w-full sm:w-auto px-8 py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 transition-all border border-slate-300 dark:border-slate-700 flex items-center justify-center">
-              View Features
-            </a>
+            <div className="hidden sm:block text-white font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-lg">or</div>
+            <Link to="/login" className="w-full sm:w-auto px-8 py-4 bg-emerald-600 text-white font-bold rounded-lg hover:bg-emerald-500 transition-all drop-shadow-lg flex items-center justify-center shadow-lg shadow-emerald-600/50">
+              Login
+            </Link>
           </div>
         </div>
       </section>
@@ -92,53 +112,29 @@ const Home: React.FC = () => {
       <section id="features" className="py-24 bg-white dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800/50">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Complete Control & Visibility</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Complete Control & Visibility</h2>
             <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">Everything you need to monitor, analyze, and optimize your building's energy consumption in one unified platform.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature) => (
-              <div key={feature.title} className="bg-slate-100 dark:bg-slate-800/50 p-8 rounded-2xl border border-slate-300 dark:border-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors group">
-                <div className="text-4xl mb-6 bg-white dark:bg-slate-900 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-300 dark:border-slate-700 group-hover:border-blue-500/50 transition-colors">
-                  {feature.icon}
+              <div
+                key={feature.title}
+                className="relative bg-slate-800/50 p-8 rounded-2xl border border-slate-700/50 hover:bg-slate-800 transition-colors group overflow-hidden"
+                style={feature.image ? { backgroundImage: `url(${feature.image})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+              >
+                {feature.image && <div className="absolute inset-0 bg-black/75" />}
+                <div className="relative z-10">
+                  <div className="text-4xl mb-6 bg-slate-900/90 w-16 h-16 rounded-xl flex items-center justify-center border border-slate-700 group-hover:border-blue-500/50 transition-colors">
+                    {feature.icon}
+                  </div>
+                  <div className="bg-black/80 p-4 rounded-2xl">
+                    <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                    <p className="text-slate-200 text-sm leading-relaxed">{feature.desc}</p>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-slate-100 mb-3">{feature.title}</h3>
-                <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* System Architecture Visualization */}
-      <section className="py-24 border-t border-slate-200 dark:border-slate-800/50">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-3xl font-bold text-white mb-12">Seamless Integration</h2>
-          <div className="relative p-8 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 flex flex-col md:flex-row items-center justify-between gap-8">
-            {/* Breaker Panel */}
-            <div className="flex-1 w-full p-6 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-300 dark:border-slate-700">
-              <div className="text-3xl mb-3">🔌</div>
-              <div className="font-semibold text-slate-800 dark:text-slate-200">Breaker Nodes</div>
-              <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">ESP32 + CT Sensors</div>
-            </div>
-            
-            <div className="hidden md:block text-slate-600">→</div>
-
-            {/* Cloud Server */}
-            <div className="flex-1 w-full p-6 bg-slate-100 dark:bg-slate-800 rounded-xl border border-blue-900/50 shadow-[0_0_30px_rgba(37,99,235,0.1)]">
-              <div className="text-3xl mb-3">☁️</div>
-              <div className="font-semibold text-blue-400">NestJS Backend</div>
-              <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">MQTT & WebSockets</div>
-            </div>
-
-            <div className="hidden md:block text-slate-600">→</div>
-
-            {/* Dashboard */}
-            <div className="flex-1 w-full p-6 bg-slate-100 dark:bg-slate-800 rounded-xl border border-emerald-900/50 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
-              <div className="text-3xl mb-3">💻</div>
-              <div className="font-semibold text-emerald-400">Web Dashboard</div>
-              <div className="text-xs text-slate-600 dark:text-slate-400 mt-2">React + Analytics</div>
-            </div>
           </div>
         </div>
       </section>

@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 import sidePaneImage from '../../assets/login side pane.png';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -20,17 +22,11 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/auth/login`, {
-        email,
-        password
-      });
-      
-      // Store token and user data
-      localStorage.setItem('token', response.data.access_token);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
-      
+      await login(email, password);
+      // The context now has the user state, so GuestRoute handles the redirect automatically
+      // or we can explicitly steer it:
       navigate('/dashboard');
-    } catch (err: unknown) {
+    } catch (err: any) {
       if (axios.isAxiosError(err)) {
         if (!err.response) {
           // No response from server (Network Error / Server Offline)
@@ -44,7 +40,7 @@ const Login: React.FC = () => {
         }
       } else {
         // Unknown JavaScript error
-        setError('An unexpected error occurred. Please try again.');
+        setError(err?.response?.data?.message || 'An unexpected error occurred. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -55,7 +51,7 @@ const Login: React.FC = () => {
     <div className="relative min-h-screen flex bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-200 transition-colors duration-300">
       <Link 
         to="/" 
-        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center text-slate-500 dark:text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors z-20"
+        className="absolute top-6 left-6 md:top-8 md:left-8 flex items-center text-slate-900 dark:text-slate-200 hover:text-slate-800 dark:hover:text-slate-100 transition-colors z-20"
       >
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -83,15 +79,17 @@ const Login: React.FC = () => {
       <div className="hidden md:flex flex-col justify-center items-center w-1/2 bg-slate-50 dark:bg-slate-800 relative overflow-hidden transition-colors duration-300">
         {/* Background Image with Overlay */}
         <div 
-          className="absolute inset-0 bg-cover bg-center z-0 opacity-100 dark:opacity-40 transition-opacity"
+          className="absolute inset-0 bg-cover bg-center z-0 opacity-100 dark:opacity-40 transition-opacity blur-sm dark:blur-none"
           style={{ backgroundImage: `url("${sidePaneImage}")` }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-50/50 to-transparent dark:from-slate-900 dark:via-slate-900/40 dark:to-transparent z-0 transition-colors duration-300 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/40 via-white/20 to-transparent dark:from-slate-950/90 dark:via-slate-950/60 dark:to-transparent z-0 transition-colors duration-300 pointer-events-none" />
         
         {/* Content */}
         <div className="z-10 flex flex-col items-center p-12 text-center">
-          <h1 className="text-4xl font-bold text-blue-600 dark:text-blue-400 mb-4 drop-shadow-sm dark:drop-shadow-lg">PowerPulse</h1>
-          <p className="text-xl text-slate-700 dark:text-slate-200 max-w-md drop-shadow-sm dark:drop-shadow-md">
+          <h1 className="text-4xl font-black text-slate-950 dark:text-cyan-300 mb-4 tracking-tight drop-shadow-[0_10px_18px_rgba(0,0,0,0.35)]">
+            PowerPulse
+          </h1>
+          <p className="text-xl font-semibold text-slate-800 dark:text-slate-200 max-w-md leading-relaxed drop-shadow-[0_8px_14px_rgba(0,0,0,0.2)]">
             Industrial-grade dashboard for precise energy tracking and automation.
           </p>
         </div>
@@ -107,7 +105,7 @@ const Login: React.FC = () => {
           )}
           <form onSubmit={handleLogin} className="space-y-4" noValidate>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1 transition-colors">
+              <label htmlFor="email" className="block text-sm font-medium text-slate-800 dark:text-slate-400 mb-1 transition-colors">
                 Email Address
               </label>
               <input 
@@ -124,7 +122,7 @@ const Login: React.FC = () => {
               />
             </div>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1 transition-colors">
+              <label htmlFor="password" className="block text-sm font-medium text-slate-800 dark:text-slate-400 mb-1 transition-colors">
                 Password
               </label>
               <div className="relative">
@@ -162,7 +160,7 @@ const Login: React.FC = () => {
             <div className="flex items-center justify-between text-sm">
               <label className="flex items-center space-x-2">
                 <input type="checkbox" className="rounded bg-slate-50 dark:bg-slate-900 border-slate-300 dark:border-slate-700 accent-blue-600" />
-                <span className="text-slate-600 dark:text-slate-400 transition-colors">Remember Me</span>
+                <span className="text-slate-800 dark:text-slate-400 transition-colors">Remember Me</span>
               </label>
               <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Forgot password?</a>
             </div>
@@ -182,7 +180,7 @@ const Login: React.FC = () => {
               ) : 'Login'}
             </button>
           </form>
-          <div className="mt-6 text-center text-sm text-slate-600 dark:text-slate-400 transition-colors">
+          <div className="mt-6 text-center text-sm text-slate-800 dark:text-slate-400 transition-colors">
             Don't have an account? <Link to="/signup" className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors">Create one</Link>
           </div>
         </div>

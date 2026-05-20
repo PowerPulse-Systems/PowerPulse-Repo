@@ -22,4 +22,7 @@ namespace MqttClient {
 
   // Publish provisioning acknowledgment
   bool publishProvisioningAck(const char* macAddress);
+
+  // Publish energy telemetry array
+  bool publishTelemetry(const char* macAddress, const char* jsonPayload);
 }

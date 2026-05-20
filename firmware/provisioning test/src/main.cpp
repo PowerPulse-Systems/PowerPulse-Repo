@@ -43,6 +43,10 @@ static DeviceState currentState = DeviceState::BOOT;
 static int wifiFailCount = 0;
 static bool provisioningInProgress = false;
 
+// Telemetry timing
+static unsigned long lastTelemetryTime = 0;
+const unsigned long TELEMETRY_INTERVAL_MS = 60000; // 1 minute
+
 // ========================
 // Provisioning data (held in RAM until COMMIT)
 // ========================
@@ -218,6 +222,7 @@ void setup() {
   WRITE_PERI_REG(RTC_CNTL_BROWN_OUT_REG, 0); 
   
   Serial.begin(115200);
+  randomSeed(analogRead(0)); // Seed random number generator
   delay(1000);
   Serial.println("\n========================================");
   Serial.println("  PowerPulse ESP32 — Provisioning FW");
@@ -317,31 +322,32 @@ void loop() {
       // Phase 2: Wait for app to confirm or deny
       if (commitRequested) {
         commitRequested = false;
-        Serial.println("[Main] COMMIT received — saving credentials to NVS permanently");
-        
-        // Save to NVS now
-        NvsConfig::store(
-          provSsid.c_str(), provPass.c_str(),
-          provBackendUrl.c_str(), provDeviceId.c_str(),
-          provMqttHost.c_str(), provMqttPort,
-          provMqttUser.c_str(), provMqttPass.c_str()
-        );
+          Serial.println("[Main] COMMIT received - saving credentials to NVS permanently");
+          BleProvisioning::sendStatus("COMMIT_START");
+          
+          // Save to NVS now
+          Serial.println("[Main] Calling NVS Store...");
+          NvsConfig::store(
+            provSsid.c_str(), provPass.c_str(),
+            provBackendUrl.c_str(), provDeviceId.c_str(),
+            provMqttHost.c_str(), provMqttPort,
+            provMqttUser.c_str(), provMqttPass.c_str()
+          );
+          Serial.println("[Main] NVS Store OK. Sending PROVISIONED to BLE...");
 
-        // Publish provisioning acknowledgment via MQTT
-        String mac = WifiManager::getMacAddress();
-        mac.replace(":", "");
-        MqttClient::publishProvisioningAck(mac.c_str());
-        MqttClient::publishStatus(mac.c_str(), true);
-
-        BleProvisioning::sendStatus("PROVISIONED");
-        Serial.println("[Main] Provisioning complete! Device is now permanently configured.");
-        
-        // Wait for the status notification to be sent, then stop BLE
-        delay(2000);
-        BleProvisioning::stop();
-        
-        currentState = DeviceState::NORMAL;
-        LedStatus::normalOperation();
+          BleProvisioning::sendStatus("PROVISIONED");
+  
+          // Publish provisioning acknowledgment via MQTT
+          Serial.println("[Main] Publishing MQTT Acks...");
+          String mac = WifiManager::getMacAddress();
+          mac.replace(":", "");
+          MqttClient::publishProvisioningAck(mac.c_str());
+          MqttClient::publishStatus(mac.c_str(), true);
+  
+          Serial.println("[Main] Provisioning complete! Device is now permanently configured.");
+          
+          // Wait for the status notification to be sent, then stop BLE
+          delay(3000);
         provisioningInProgress = false;
       }
       
@@ -354,6 +360,39 @@ void loop() {
 
     case DeviceState::NORMAL:
       MqttClient::loop();
+      
+      // Publish random energy every minute
+      if (millis() - lastTelemetryTime >= TELEMETRY_INTERVAL_MS) {
+        lastTelemetryTime = millis();
+          
+          String mac = WifiManager::getMacAddress();
+          mac.replace(":", "");
+          
+          // Generate a JSON array payload for exactly 3 mock channels
+          char payload[512];
+          snprintf(payload, sizeof(payload), 
+            "{\"channels\":["
+              "{\"id\":1, \"energy_wh\":%.1f, \"avg_power_w\":%.1f},"
+              "{\"id\":2, \"energy_wh\":%.1f, \"avg_power_w\":%.1f},"
+              "{\"id\":3, \"energy_wh\":%.1f, \"avg_power_w\":%.1f}"
+            "]}", 
+            random(500, 1500) / 10.0, random(10, 100) / 1.0,
+            random(50, 800) / 10.0, random(5, 50) / 1.0,
+            random(10, 500) / 10.0, random(1, 30) / 1.0
+          );
+            
+          Serial.printf("\n[Main] ------ MINUTE TICK ------\n");
+          Serial.printf("[Main] Generating & Sending telemetry for MAC: %s\n", mac.c_str());
+          Serial.printf("[Main] JSON Payload: %s\n", payload);
+          
+          bool success = MqttClient::publishTelemetry(mac.c_str(), payload);
+          if (success) {
+            Serial.println("[Main] Telemetry data successfully handed off to MQTT Broker!");
+          } else {
+            Serial.println("[Main] Failed to send telemetry data to MQTT Broker.");
+          }
+          Serial.println("[Main] --------------------------\n");
+      }
       
       // Check WiFi health
       if (!WifiManager::isConnected()) {

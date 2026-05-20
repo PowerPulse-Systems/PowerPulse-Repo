@@ -39,6 +39,7 @@ model Device {
   firmwareVersion String?
   onlineStatus    Boolean   @default(false)
   lastSeen        DateTime?
+  channelsCount   Int       @default(0)
   userId          String?
   user            User?     @relation(fields: [userId], references: [id])
   breakers        Breaker[]
@@ -49,6 +50,7 @@ model Device {
 model Breaker {
   id             String          @id @default(uuid())
   label          String
+  channelIndex   Int             @default(1)
   phase          String?
   panelId        String
   deviceId       String
