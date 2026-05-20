@@ -90,10 +90,8 @@ bool MqttClient::publishProvisioningAck(const char* macAddress) {
   return publish(topic, "{\"status\":\"provisioned\"}");
 }
 
-bool MqttClient::publishEnergy(const char* macAddress, float energyKwh) {
+bool MqttClient::publishTelemetry(const char* macAddress, const char* jsonPayload) {
   char topic[64];
   snprintf(topic, sizeof(topic), "bems/%s/telemetry", macAddress);
-  char payload[128];
-  snprintf(payload, sizeof(payload), "{\"energy_kwh\":%.3f}", energyKwh);
-  return publish(topic, payload);
+  return publish(topic, jsonPayload);
 }
