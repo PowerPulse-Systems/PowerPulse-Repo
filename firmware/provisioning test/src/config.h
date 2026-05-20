@@ -19,13 +19,13 @@
 // WiFi Configuration
 // ========================
 #define WIFI_CONNECT_TIMEOUT_MS  15000   // 15 seconds timeout
-#define WIFI_MAX_RETRIES         5       // Max retries before re-entering provisioning
+#define WIFI_MAX_RETRIES         3       // Max retries before re-entering provisioning
 
 // ========================
 // MQTT Configuration
 // ========================
-#define MQTT_RECONNECT_DELAY_MS  5000    // 5 seconds between reconnects
-#define MQTT_MAX_RETRIES         5
+#define MQTT_RECONNECT_DELAY_MS  1000    // 5 seconds between reconnects
+#define MQTT_MAX_RETRIES         3
 
 // ========================
 // NVS Namespace

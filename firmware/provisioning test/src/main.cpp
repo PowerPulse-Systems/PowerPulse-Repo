@@ -386,11 +386,12 @@ void loop() {
           Serial.printf("[Main] JSON Payload: %s\n", payload);
           
           bool success = MqttClient::publishTelemetry(mac.c_str(), payload);
-          Serial.println("[Main] Telemetry data successfully handed off to MQTT Broker!");
-        } else {
-          Serial.println("[Main] Failed to send telemetry data to MQTT Broker.");
-        }
-        Serial.println("[Main] --------------------------\n");
+          if (success) {
+            Serial.println("[Main] Telemetry data successfully handed off to MQTT Broker!");
+          } else {
+            Serial.println("[Main] Failed to send telemetry data to MQTT Broker.");
+          }
+          Serial.println("[Main] --------------------------\n");
       }
       
       // Check WiFi health

@@ -110,85 +110,72 @@ const DeviceSettings: React.FC = () => {
 
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Breakers</h2>
-              <button 
-                onClick={async () => {
-                  const label = prompt('Enter a label for the new breaker (e.g., Main AC):');
-                  if (label) {
-                    try {
-                      const token = localStorage.getItem('token');
-                      await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/devices/${id}/breakers`, {
-                        method: 'POST',
-                        headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ label, phase: 'L1' })
-                      });
-                      // Reload device
-                      const res = await devicesApi.getDevice(id!);
-                      setDevice(res.data);
-                    } catch (err) {
-                      console.error('Failed to add breaker', err);
-                      alert('Failed to add breaker');
-                    }
-                  }
-                }}
-                className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                Add Breaker
-              </button>
+              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Discovered Channels</h2>
+              <span className="text-xs font-medium px-2.5 py-1 bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 rounded-full">
+                Auto-mapped via ESP32
+              </span>
             </div>
             
             {device.breakers && device.breakers.length > 0 ? (
               <div className="space-y-3">
                 {device.breakers.map((breaker: any) => (
-                  <div key={breaker.id} className="flex justify-between items-center p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                  <div key={breaker.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 gap-3 sm:gap-0">
                     <div>
-                      <div className="font-medium text-slate-900 dark:text-white">{breaker.label || breaker.name || 'Unnamed Breaker'}</div>
-                      <div className="text-xs text-slate-500 dark:text-slate-500 font-mono">Phase: {breaker.phase || 'N/A'}</div>
+                      <div className="font-medium text-slate-900 dark:text-white flex items-center gap-2">
+                        {breaker.label || breaker.name || `Channel ${breaker.channelIndex}`}
+                        <span className="text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded font-mono">
+                          CH {breaker.channelIndex || 'N/A'}
+                        </span>
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-500 font-mono mt-0.5">Phase: {breaker.phase || 'Unassigned'}</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => {
-                          setSelectedBreaker({ id: breaker.id, name: breaker.label || breaker.name || 'Unnamed Breaker' });
-                          setEnergyModalOpen(true);
-                        }}
-                        className="px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 rounded-lg flex items-center gap-1.5 transition-colors"
-                      >
-                        <Zap className="w-3.5 h-3.5" /> View Data
-                      </button>
+                    <div className="flex items-center gap-2 w-full sm:w-auto">
                       <button 
                         onClick={async () => {
-                          if (window.confirm('Are you sure you want to delete this breaker? All its historical energy data will be lost.')) {
+                          const newLabel = prompt('Rename this channel (e.g., Main Server Rack):', breaker.label || '');
+                          if (newLabel !== null) {
                             try {
                               const token = localStorage.getItem('token');
                               await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/devices/${id}/breakers/${breaker.id}`, {
-                                method: 'DELETE',
+                                method: 'POST', // Using the patch/post route we created
                                 headers: {
+                                  'Content-Type': 'application/json',
                                   'Authorization': `Bearer ${token}`
-                                }
+                                },
+                                body: JSON.stringify({ label: newLabel })
                               });
                               // Reload device
                               const res = await devicesApi.getDevice(id!);
                               setDevice(res.data);
                             } catch (err) {
-                              console.error('Failed to delete breaker', err);
-                              alert('Failed to delete breaker');
+                              console.error('Failed to update channel label', err);
+                              alert('Failed to update channel');
                             }
                           }
                         }}
-                        className="px-2 py-1.5 text-xs font-medium bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20 rounded-lg flex items-center transition-colors"
+                        className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600 rounded-lg transition-colors text-center"
                       >
-                        Delete
+                        Rename
+                      </button>
+                      
+                      <button 
+                        onClick={() => {
+                          setSelectedBreaker({ id: breaker.id, name: breaker.label || breaker.name || `Channel ${breaker.channelIndex}` });
+                          setEnergyModalOpen(true);
+                        }}
+                        className="flex-1 sm:flex-none px-3 py-1.5 text-xs font-medium bg-blue-50 hover:bg-blue-100 text-blue-600 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 rounded-lg flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <Zap className="w-3.5 h-3.5" /> Data
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8 text-slate-500 dark:text-slate-500 text-sm">
-                No breakers configured for this device yet.
+              <div className="text-center py-8 text-slate-500 dark:text-slate-500 text-sm bg-slate-50 dark:bg-slate-800/20 rounded-xl border border-dashed border-slate-200 dark:border-slate-700">
+                <Activity className="w-6 h-6 mx-auto mb-2 opacity-50" />
+                No channels detected yet.<br />
+                Power on the ESP32 to auto-discover channels.
               </div>
             )}
           </div>
