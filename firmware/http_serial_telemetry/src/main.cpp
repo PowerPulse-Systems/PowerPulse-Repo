@@ -4,9 +4,9 @@
 
 // Hardcoded test configuration.
 // Change these values for your WiFi and backend before uploading.
-static const char* WIFI_SSID = "YOUR_WIFI_NAME";
-static const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-static const char* BACKEND_URL = "http://192.168.1.10:3000/telemetry/http";
+static const char* WIFI_SSID = "cloud9";
+static const char* WIFI_PASSWORD = "12345678";
+static const char* BACKEND_URL = "https://pwrpulsebackend.azurewebsites.net/devices/telemetry";
 static const char* DEVICE_ID = "esp32-http-serial-1";
 
 // ESP32 Serial2 pins. Connect the sending ESP TX to this ESP RX pin.
