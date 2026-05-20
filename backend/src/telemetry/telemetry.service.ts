@@ -1,15 +1,49 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class TelemetryService {
   private readonly logger = new Logger(TelemetryService.name);
   private deviceCache = new Map<string, any>();
+  private latestHttpReading: {
+    deviceId: string;
+    current: number;
+    voltage: number;
+    power: number;
+    receivedAt: string;
+  } | null = null;
 
   constructor(private prisma: PrismaService) {}
 
   clearDeviceCache(macAddress: string) {
     this.deviceCache.delete(macAddress);
+  }
+
+  recordHttpReading(payload: { deviceId?: string; current: number; voltage: number }) {
+    const current = Number(payload.current);
+    const voltage = Number(payload.voltage);
+
+    if (!Number.isFinite(current) || !Number.isFinite(voltage)) {
+      throw new BadRequestException('current and voltage must be valid numbers');
+    }
+
+    this.latestHttpReading = {
+      deviceId: payload.deviceId || 'hardcoded-esp',
+      current,
+      voltage,
+      power: current * voltage,
+      receivedAt: new Date().toISOString(),
+    };
+
+    this.logger.log(
+      `HTTP telemetry: ${this.latestHttpReading.deviceId} ${voltage}V ${current}A ${this.latestHttpReading.power}W`,
+    );
+
+    return { success: true, data: this.latestHttpReading };
+  }
+
+  getLatestHttpReading() {
+    return this.latestHttpReading;
   }
 
   async processTelemetry(buildingId: string, deviceId: string, payload: any) {
