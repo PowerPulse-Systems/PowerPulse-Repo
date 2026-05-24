@@ -73,3 +73,11 @@ export const energyApi = {
 export const telemetryApi = {
   getLatest: () => api.get('/telemetry/latest'),
 };
+
+// ========================
+// MQTT Debugger API (Development Only)
+// ========================
+export const mqttDebugApi = {
+  getMessages: () => api.get('/mqtt/messages'),
+  clearMessages: () => api.delete('/mqtt/messages'),
+};
