@@ -9,6 +9,15 @@ export class MqttService implements OnModuleInit {
   private client: mqtt.MqttClient;
   private readonly logger = new Logger(MqttService.name);
 
+  // Circular buffer for development debugging
+  private debugMessages: Array<{
+    id: string;
+    topic: string;
+    payload: string;
+    timestamp: string;
+  }> = [];
+  private readonly MAX_DEBUG_MESSAGES = 200;
+
   constructor(
     private configService: ConfigService,
     private telemetryService: TelemetryService,
@@ -84,6 +93,15 @@ export class MqttService implements OnModuleInit {
           this.logger.log('Subscribed to topics: bems/+/provisioning/ack');
         }
       });
+
+      // Subscribe to debug wildcard topic (development only)
+      this.client.subscribe('bems/#', (err) => {
+        if (err) {
+          this.logger.error('Failed to subscribe to wildcard debug topic bems/#', err);
+        } else {
+          this.logger.log('✅ Subscribed to debug wildcard topic bems/#');
+        }
+      });
     });
 
     this.client.on('message', (topic, payload) => {
@@ -100,6 +118,17 @@ export class MqttService implements OnModuleInit {
 
   private handleIncomingMessage(topic: string, message: string) {
     this.logger.log(`Received message on topic ${topic}: ${message}`);
+
+    // Buffer incoming message for development debugger
+    this.debugMessages.unshift({
+      id: Math.random().toString(36).substring(2, 11),
+      topic,
+      payload: message,
+      timestamp: new Date().toISOString(),
+    });
+    if (this.debugMessages.length > this.MAX_DEBUG_MESSAGES) {
+      this.debugMessages.pop();
+    }
     
     try {
       const parts = topic.split('/');
@@ -149,5 +178,13 @@ export class MqttService implements OnModuleInit {
     } else {
       this.logger.error('Cannot publish. MQTT client is not connected.');
     }
+  }
+
+  getDebugMessages() {
+    return this.debugMessages;
+  }
+
+  clearDebugMessages() {
+    this.debugMessages = [];
   }
 }
