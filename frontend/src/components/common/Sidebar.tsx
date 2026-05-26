@@ -7,7 +7,8 @@ import {
   Bell, 
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Terminal
 } from 'lucide-react';
 
 const Sidebar: React.FC = () => {
@@ -19,6 +20,7 @@ const Sidebar: React.FC = () => {
     { name: 'Analytics', path: '/analytics', icon: Activity },
     { name: 'Alerts', path: '/alerts', icon: Bell },
     { name: 'Settings', path: '/settings', icon: Settings },
+    { name: 'MQTT Debugger', path: '/mqtt-debugger', icon: Terminal },
   ];
 
   return (

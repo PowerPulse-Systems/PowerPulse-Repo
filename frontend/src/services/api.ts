@@ -66,3 +66,18 @@ export const energyApi = {
   getSummary: (breakerId: string, hours: number = 24) =>
     api.get(`/energy/${breakerId}/summary`, { params: { hours } }),
 };
+
+// ========================
+// Simple HTTP Telemetry API
+// ========================
+export const telemetryApi = {
+  getLatest: () => api.get('/telemetry/latest'),
+};
+
+// ========================
+// MQTT Debugger API (Development Only)
+// ========================
+export const mqttDebugApi = {
+  getMessages: () => api.get('/mqtt/messages'),
+  clearMessages: () => api.delete('/mqtt/messages'),
+};

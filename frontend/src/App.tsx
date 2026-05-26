@@ -12,6 +12,7 @@ import DeviceSettings from './pages/Devices/DeviceSettings';
 import Analytics from './pages/Analytics/Analytics';
 import Alerts from './pages/Alerts/Alerts';
 import Settings from './pages/Settings/Settings';
+import MqttDebugger from './pages/MqttDebugger/MqttDebugger';
 
 // Layouts & Guards
 import DashboardLayout from './layouts/DashboardLayout';
@@ -86,6 +87,16 @@ const App: React.FC = () => {
             <ProtectedRoute>
               <DashboardLayout>
                 <Settings />
+              </DashboardLayout>
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path='/mqtt-debugger' 
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <MqttDebugger />
               </DashboardLayout>
             </ProtectedRoute>
           } 
