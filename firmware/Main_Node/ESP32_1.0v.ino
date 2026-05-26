@@ -3,164 +3,141 @@
 #include <Adafruit_SSD1306.h>
 #include "EmonLib.h"
 
-// OLED display size
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 
-// Create OLED object
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
-// Create EnergyMonitor object
-EnergyMonitor emon1;
-
-// =====================================================
-// CALIBRATION VALUES — Adjust these to match your setup
-// =====================================================
-#define VOLTAGE_CAL     57.52   // Adjust if voltage reads wrong
-#define VOLTAGE_PHASE   1.7     // Phase shift for ZMPT101B
-#define CURRENT_CAL     3.51    // ✅ Fixed: was 111.1 (overcounting ~31x)
-#define VOLTAGE_PIN     33
-#define CURRENT_PIN     34
-#define VOLTAGE_MIN     80.0    // Below this = no load / noise floor
+EnergyMonitor emon1; // Phase 1 (voltage + current)
+EnergyMonitor emon2; // Phase 2 (current only)
+EnergyMonitor emon3; // Phase 3 (current only)
 
 void setup()
 {
   Serial.begin(9600);
 
-  // Initialize OLED
   if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
-    Serial.println(F("SSD1306 allocation failed"));
+    Serial.println(F("SSD1306 failed"));
     while (1);
   }
 
-  // Splash screen
   display.clearDisplay();
   display.setTextSize(2);
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(10, 10);
-  display.println("ENERGY");
-  display.setCursor(10, 35);
-  display.println("MONITOR");
+  display.setCursor(0, 10);
+  display.println(" TEST");
   display.display();
-
-  // Extended delay for ZMPT101B + ADC to fully settle
   delay(3000);
 
-  // Initialize voltage and current sensors
-  emon1.voltage(VOLTAGE_PIN, VOLTAGE_CAL, VOLTAGE_PHASE);
-  emon1.current(CURRENT_PIN, CURRENT_CAL);
+  // Voltage on pin 33 (Phase 1 only)
+  emon1.voltage(33, 57.52, 1.7);
 
-  // Warmup screen
+  // Current sensors
+  emon1.current(34, 111.1); // Phase 1
+  emon2.current(32, 111.1); // Phase 2
+  emon3.current(35, 111.1); // Phase 3
+
   display.clearDisplay();
   display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
-  display.setCursor(20, 20);
-  display.println("Warming up...");
-  display.setCursor(20, 35);
-  display.println("Please wait");
+  display.setCursor(0, 20);
+  display.println("  ...");
+  display.println("  Please wait");
   display.display();
 
-  // Warmup: run dummy cycles so ADC midpoint stabilizes
+  // Warmup cycles
   for (int i = 0; i < 5; i++) {
     emon1.calcVI(40, 2000);
+    emon2.calcVI(40, 2000); // no voltage pin configured, only Irms will be valid
+    emon3.calcVI(40, 2000);
     delay(500);
   }
-
-  Serial.println("=== Energy Monitor Started ===");
-  Serial.println("If current reads wrong, adjust CURRENT_CAL:");
-  Serial.println("  new_cal = current_cal x (real / displayed)");
-  Serial.println("==============================");
 }
 
 void loop()
 {
-  // Dummy run to flush stale ADC readings
+  // Flush stale readings
   emon1.calcVI(40, 2000);
+  emon2.calcVI(40, 2000);
+  emon3.calcVI(40, 2000);
 
   // Actual measurement
   emon1.calcVI(40, 2000);
+  emon2.calcVI(40, 2000);
+  emon3.calcVI(40, 2000);
 
-  // Read raw values
-  float realPower     = emon1.realPower;
-  float apparentPower = emon1.apparentPower;
-  float powerFactor   = emon1.powerFactor;
+  // Phase 1 (full)
   float supplyVoltage = emon1.Vrms;
-  float Irms          = emon1.Irms;
+  float Irms1         = emon1.Irms;
+  float realPower1    = emon1.realPower;
+  float apparentPower1= emon1.apparentPower;
+  float powerFactor1  = emon1.powerFactor;
 
-  // Noise floor: if voltage too low, zero everything out
-  if (supplyVoltage < VOLTAGE_MIN) {
-    supplyVoltage = 0.0;
-    Irms          = 0.0;
-    realPower     = 0.0;
-    apparentPower = 0.0;
-    powerFactor   = 0.0;
+  // Phase 2 & 3 (current only)
+  float Irms2 = emon2.Irms;
+  float Irms3 = emon3.Irms;
+
+  // Suppress noise when no voltage
+  if (supplyVoltage < 80) {
+    supplyVoltage = 0;
+    Irms1 = 0; Irms2 = 0; Irms3 = 0;
+    realPower1 = 0; apparentPower1 = 0; powerFactor1 = 0;
   }
 
-  // Clamp negative values (can happen with EmonLib on low loads)
-  if (realPower     < 0) realPower     = 0;
-  if (apparentPower < 0) apparentPower = 0;
-  if (Irms          < 0) Irms          = 0;
-  if (powerFactor   < 0) powerFactor   = 0;
-  if (powerFactor   > 1) powerFactor   = 1;
+  // Estimate power for P2 & P3 using Phase 1 voltage
+  float realPower2 = supplyVoltage * Irms2;
+  float realPower3 = supplyVoltage * Irms3;
+  float totalPower = realPower1 + realPower2 + realPower3;
 
-  // ── Serial Monitor Output ──────────────────────────
-  Serial.println("-------------------");
-  Serial.print("Voltage:        ");
-  Serial.print(supplyVoltage, 1);
-  Serial.println(" V");
-
-  Serial.print("Current:        ");
-  Serial.print(Irms, 3);
-  Serial.println(" A");
-
-  Serial.print("Real Power:     ");
-  Serial.print(realPower, 1);
-  Serial.println(" W");
-
-  Serial.print("Apparent Power: ");
-  Serial.print(apparentPower, 1);
-  Serial.println(" VA");
-
-  Serial.print("Power Factor:   ");
-  Serial.println(powerFactor, 2);
+  // Serial output
+  Serial.println("=== Phase 1 ===");
+  Serial.print("Voltage: ");        Serial.print(supplyVoltage); Serial.println(" V");
+  Serial.print("Current: ");        Serial.print(Irms1);         Serial.println(" A");
+  Serial.print("Real Power: ");     Serial.print(realPower1);    Serial.println(" W");
+  Serial.print("Apparent Power: "); Serial.print(apparentPower1);Serial.println(" VA");
+  Serial.print("Power Factor: ");   Serial.println(powerFactor1);
+  Serial.println("=== Phase 2 ===");
+  Serial.print("Current: ");    Serial.print(Irms2);      Serial.println(" A");
+  Serial.print("Est. Power: "); Serial.print(realPower2); Serial.println(" W");
+  Serial.println("=== Phase 3 ===");
+  Serial.print("Current: ");    Serial.print(Irms3);      Serial.println(" A");
+  Serial.print("Est. Power: "); Serial.print(realPower3); Serial.println(" W");
+  Serial.println("=== TOTAL ===");
+  Serial.print("Total Power: "); Serial.print(totalPower); Serial.println(" W");
   Serial.println("-------------------");
 
-  // ── OLED Display ──────────────────────────────────
+  // OLED: alternate between 2 pages
+  static bool showPage2 = false;
+
   display.clearDisplay();
   display.setTextSize(1);
-  display.setTextColor(SSD1306_WHITE);
 
-  // Row 1 — Voltage
-  display.setCursor(0, 0);
-  display.print("Volt : ");
-  display.print(supplyVoltage, 1);
-  display.print(" V");
-
-  // Row 2 — Current
-  display.setCursor(0, 13);
-  display.print("Curr : ");
-  display.print(Irms, 3);
-  display.print(" A");
-
-  // Row 3 — Real Power
-  display.setCursor(0, 26);
-  display.print("Pwr  : ");
-  display.print(realPower, 1);
-  display.print(" W");
-
-  // Row 4 — Apparent Power
-  display.setCursor(0, 39);
-  display.print("App  : ");
-  display.print(apparentPower, 1);
-  display.print(" VA");
-
-  // Row 5 — Power Factor
-  display.setCursor(0, 52);
-  display.print("PF   : ");
-  display.print(powerFactor, 2);
+  if (!showPage2) {
+    // Page 1: Voltage + 3 currents + PF
+    display.setCursor(0, 0);
+    display.print("V:  "); display.print(supplyVoltage, 1); display.println(" V");
+    display.setCursor(0, 12);
+    display.print("I1: "); display.print(Irms1, 2); display.println(" A");
+    display.setCursor(0, 24);
+    display.print("I2: "); display.print(Irms2, 2); display.println(" A");
+    display.setCursor(0, 36);
+    display.print("I3: "); display.print(Irms3, 2); display.println(" A");
+    display.setCursor(0, 50);
+    display.print("PF: "); display.print(powerFactor1, 2);
+  } else {
+    // Page 2: Per-phase power + total
+    display.setCursor(0, 0);
+    display.print("P1: "); display.print(realPower1, 1); display.println(" W");
+    display.setCursor(0, 16);
+    display.print("P2: "); display.print(realPower2, 1); display.println(" W");
+    display.setCursor(0, 32);
+    display.print("P3: "); display.print(realPower3, 1); display.println(" W");
+    display.setCursor(0, 48);
+    display.print("TOT:"); display.print(totalPower, 1); display.println(" W");
+  }
 
   display.display();
+  showPage2 = !showPage2;
 
   delay(1000);
 }
