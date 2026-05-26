@@ -14,15 +14,18 @@ import Alerts from './pages/Alerts/Alerts';
 import Settings from './pages/Settings/Settings';
 import MqttDebugger from './pages/MqttDebugger/MqttDebugger';
 
+
 // Layouts & Guards
 import DashboardLayout from './layouts/DashboardLayout';
 import { ProtectedRoute } from './components/common/ProtectedRoute';
 import { GuestRoute } from './components/common/GuestRoute';
+import { SocketProvider } from './context/SocketProvider';
 
 import './App.css';
 
 const App: React.FC = () => {
   return (
+    <SocketProvider>
     <Router basename="/PowerPulse-Repo">
       <Routes>
         {/* Public Routes */}
@@ -103,6 +106,7 @@ const App: React.FC = () => {
         />
       </Routes>
     </Router>
+    </SocketProvider>
   );
 }
 

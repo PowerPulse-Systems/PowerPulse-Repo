@@ -95,3 +95,15 @@ bool MqttClient::publishTelemetry(const char* macAddress, const char* jsonPayloa
   snprintf(topic, sizeof(topic), "bems/%s/telemetry", macAddress);
   return publish(topic, jsonPayload);
 }
+
+bool MqttClient::publishLive(const char* macAddress, const char* jsonPayload) {
+  char topic[64];
+  snprintf(topic, sizeof(topic), "bems/%s/live", macAddress);
+  return publish(topic, jsonPayload);
+}
+
+bool MqttClient::publishEnergy(const char* macAddress, const char* jsonPayload) {
+  char topic[64];
+  snprintf(topic, sizeof(topic), "bems/%s/energy", macAddress);
+  return publish(topic, jsonPayload);
+}

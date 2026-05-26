@@ -23,6 +23,12 @@ namespace MqttClient {
   // Publish provisioning acknowledgment
   bool publishProvisioningAck(const char* macAddress);
 
-  // Publish energy telemetry array
+  // Publish energy telemetry array (legacy topic)
   bool publishTelemetry(const char* macAddress, const char* jsonPayload);
+
+  // Publish live telemetry (fast, every 3s) → bems/<mac>/live
+  bool publishLive(const char* macAddress, const char* jsonPayload);
+
+  // Publish energy accumulation (every 60s) → bems/<mac>/energy
+  bool publishEnergy(const char* macAddress, const char* jsonPayload);
 }

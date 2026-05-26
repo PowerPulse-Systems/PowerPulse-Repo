@@ -1,11 +1,49 @@
-import { Injectable, NotFoundException, ConflictException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, Logger, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
-export class DevicesService {
+export class DevicesService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(DevicesService.name);
+  private watchdogInterval: NodeJS.Timeout | null = null;
 
   constructor(private prisma: PrismaService) {}
+
+  onModuleInit() {
+    this.logger.log('🚀 Starting Active Device Watchdog Checker (60s check)...');
+    this.watchdogInterval = setInterval(async () => {
+      await this.scanAndCleanStaleDevices();
+    }, 60000);
+  }
+
+  onModuleDestroy() {
+    if (this.watchdogInterval) {
+      clearInterval(this.watchdogInterval);
+    }
+  }
+
+  async scanAndCleanStaleDevices() {
+    try {
+      const threeMinutesAgo = new Date(Date.now() - 3 * 60 * 1000);
+      const result = await this.prisma.device.updateMany({
+        where: {
+          onlineStatus: true,
+          OR: [
+            { lastSeen: { lt: threeMinutesAgo } },
+            { lastSeen: null }
+          ]
+        },
+        data: {
+          onlineStatus: false
+        }
+      });
+
+      if (result.count > 0) {
+        this.logger.log(`⚠️ Watchdog: Marked ${result.count} stale devices as OFFLINE`);
+      }
+    } catch (error) {
+      this.logger.error(`Error in watchdog scan: ${(error as Error).message}`);
+    }
+  }
 
   /**
    * Register a new device (called during provisioning).
