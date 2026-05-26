@@ -67,12 +67,30 @@ export class MqttService implements OnModuleInit {
         }
       });
 
-      // Subscribe to new device telemetry topic
+      // Subscribe to new device telemetry topic (legacy)
       this.client.subscribe('bems/+/telemetry', (err) => {
         if (err) {
           this.logger.error('Failed to subscribe to esp telemetry topics', err);
         } else {
           this.logger.log('Subscribed to topics: bems/+/telemetry');
+        }
+      });
+
+      // Subscribe to live telemetry stream (fast, 3s interval)
+      this.client.subscribe('bems/+/live', (err) => {
+        if (err) {
+          this.logger.error('Failed to subscribe to live telemetry topics', err);
+        } else {
+          this.logger.log('Subscribed to topics: bems/+/live');
+        }
+      });
+
+      // Subscribe to energy accumulation stream (60s interval, stored)
+      this.client.subscribe('bems/+/energy', (err) => {
+        if (err) {
+          this.logger.error('Failed to subscribe to energy telemetry topics', err);
+        } else {
+          this.logger.log('Subscribed to topics: bems/+/energy');
         }
       });
 
@@ -133,7 +151,23 @@ export class MqttService implements OnModuleInit {
     try {
       const parts = topic.split('/');
 
-      // Handle esp telemetry: bems/{macAddress}/telemetry
+      // Handle live telemetry stream: bems/{macAddress}/live
+      if (parts.length === 3 && parts[2] === 'live') {
+        const macAddress = parts[1];
+        const payload = JSON.parse(message);
+        this.telemetryService.processLiveData(macAddress, payload);
+        return;
+      }
+
+      // Handle energy accumulation stream: bems/{macAddress}/energy
+      if (parts.length === 3 && parts[2] === 'energy') {
+        const macAddress = parts[1];
+        const payload = JSON.parse(message);
+        this.telemetryService.processEnergyData(macAddress, payload);
+        return;
+      }
+
+      // Handle legacy esp telemetry: bems/{macAddress}/telemetry
       if (parts.length === 3 && parts[2] === 'telemetry') {
         const macAddress = parts[1];
         const payload = JSON.parse(message);

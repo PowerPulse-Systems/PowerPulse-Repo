@@ -24,8 +24,21 @@
 // ========================
 // MQTT Configuration
 // ========================
-#define MQTT_RECONNECT_DELAY_MS  1000    // 5 seconds between reconnects
+#define MQTT_RECONNECT_DELAY_MS  1000    // 1 second between reconnects
 #define MQTT_MAX_RETRIES         3
+
+// ========================
+// Telemetry Intervals
+// ========================
+#define LIVE_INTERVAL_MS         3000    // Fast live telemetry (3 seconds)
+#define ENERGY_INTERVAL_MS       60000   // Energy accumulation (60 seconds)
+
+// ========================
+// Channel Configuration (hardcoded for now)
+// ========================
+#define NUM_VOLTAGE_CHANNELS     3       // Number of voltage inputs
+#define NUM_CURRENT_CHANNELS     7       // Total CT channels across all voltage inputs
+// Mapping: voltage 1 -> CT 1,2,3 | voltage 2 -> CT 4,5 | voltage 3 -> CT 6,7
 
 // ========================
 // NVS Namespace

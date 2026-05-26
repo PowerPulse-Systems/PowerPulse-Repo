@@ -1,9 +1,14 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards, Req, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { TelemetryService } from './telemetry.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Controller('telemetry')
 export class TelemetryController {
-  constructor(private readonly telemetryService: TelemetryService) {}
+  constructor(
+    private readonly telemetryService: TelemetryService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   /**
    * Simple unauthenticated ESP endpoint for hardcoded HTTP testing.
@@ -25,6 +30,40 @@ export class TelemetryController {
   getLatestHttpTelemetry() {
     return {
       data: this.telemetryService.getLatestHttpReading(),
+    };
+  }
+
+  /**
+   * Returns the latest in-memory live reading for a specific device.
+   * GET /telemetry/live/:macAddress
+   * Protected — only the device owner can access this.
+   */
+  @Get('live/:macAddress')
+  @UseGuards(JwtAuthGuard)
+  async getLiveTelemetry(
+    @Param('macAddress') macAddress: string,
+    @Req() req: any,
+  ) {
+    const userId = req.user.userId;
+
+    // Verify device exists and belongs to this user
+    const device = await this.prisma.device.findUnique({
+      where: { macAddress },
+    });
+
+    if (!device) {
+      throw new NotFoundException(`Device ${macAddress} not found`);
+    }
+
+    if (device.userId !== userId) {
+      throw new ForbiddenException('You do not own this device');
+    }
+
+    const liveData = this.telemetryService.getLiveData(macAddress);
+
+    return {
+      data: liveData,
+      stale: liveData ? (Date.now() - liveData.receivedAt > 10000) : true,
     };
   }
 }
