@@ -43,9 +43,9 @@ static DeviceState currentState = DeviceState::BOOT;
 static int wifiFailCount = 0;
 static bool provisioningInProgress = false;
 
-// Telemetry timing
+// Telemetry timing — dual timers
 static unsigned long lastTelemetryTime = 0;
-const unsigned long TELEMETRY_INTERVAL_MS = 60000; // 1 minute
+static unsigned long lastLiveTime = 0;
 
 // ========================
 // Provisioning data (held in RAM until COMMIT)
@@ -226,7 +226,7 @@ void setup() {
   delay(1000);
   Serial.println("\n========================================");
   Serial.println("  PowerPulse ESP32 — Provisioning FW");
-  Serial.println("  Two-Phase Commit Architecture");
+  Serial.println("  Dual-Stream Telemetry Architecture");
   Serial.println("========================================");
   Serial.println("[Main] Brownout detector disabled for dev stability.");
 
@@ -348,7 +348,12 @@ void loop() {
           
           // Wait for the status notification to be sent, then stop BLE
           delay(3000);
-        provisioningInProgress = false;
+          provisioningInProgress = false;
+          currentState = DeviceState::NORMAL;
+          LedStatus::normalOperation();
+          lastTelemetryTime = 0;
+          lastLiveTime = 0;
+          Serial.println("[Main] Switched to normal operation mode");
       }
       
       if (rollbackRequested) {
@@ -361,37 +366,98 @@ void loop() {
     case DeviceState::NORMAL:
       MqttClient::loop();
       
-      // Publish random energy every minute
-      if (millis() - lastTelemetryTime >= TELEMETRY_INTERVAL_MS) {
+      // ============================================================
+      // STREAM 1: Live telemetry (every 3 seconds, not stored)
+      // Publishes voltage-grouped V/I/P to bems/<mac>/live
+      // ============================================================
+      if (millis() - lastLiveTime >= LIVE_INTERVAL_MS) {
+        lastLiveTime = millis();
+        
+        String mac = WifiManager::getMacAddress();
+        mac.replace(":", "");
+        
+        // Build voltage-grouped live payload with mock data
+        char livePayload[512];
+        snprintf(livePayload, sizeof(livePayload),
+          "{\"voltage_channels\":["
+            "{\"id\":1,\"v\":%.1f,\"ct\":["
+              "{\"id\":1,\"i\":%.2f,\"p\":%.1f},"
+              "{\"id\":2,\"i\":%.2f,\"p\":%.1f},"
+              "{\"id\":3,\"i\":%.2f,\"p\":%.1f}"
+            "]},"
+            "{\"id\":2,\"v\":%.1f,\"ct\":["
+              "{\"id\":4,\"i\":%.2f,\"p\":%.1f},"
+              "{\"id\":5,\"i\":%.2f,\"p\":%.1f}"
+            "]},"
+            "{\"id\":3,\"v\":%.1f,\"ct\":["
+              "{\"id\":6,\"i\":%.2f,\"p\":%.1f},"
+              "{\"id\":7,\"i\":%.2f,\"p\":%.1f}"
+            "]}"
+          "]}",
+          228.0 + random(-20, 20) / 10.0,
+          random(50, 300) / 100.0, random(100, 700) / 10.0,
+          random(30, 200) / 100.0, random(50, 500) / 10.0,
+          random(10, 150) / 100.0, random(20, 350) / 10.0,
+          229.0 + random(-20, 20) / 10.0,
+          random(20, 250) / 100.0, random(40, 600) / 10.0,
+          random(10, 180) / 100.0, random(20, 400) / 10.0,
+          230.0 + random(-20, 20) / 10.0,
+          random(40, 350) / 100.0, random(80, 800) / 10.0,
+          random(10, 100) / 100.0, random(10, 250) / 10.0
+        );
+        
+        MqttClient::publishLive(mac.c_str(), livePayload);
+      }
+
+      // ============================================================
+      // STREAM 2: Energy accumulation (every 60 seconds, stored in DB)
+      // Publishes voltage-grouped energy_wh/avg_power_w to bems/<mac>/energy
+      // ============================================================
+      if (millis() - lastTelemetryTime >= ENERGY_INTERVAL_MS) {
         lastTelemetryTime = millis();
           
-          String mac = WifiManager::getMacAddress();
-          mac.replace(":", "");
+        String mac = WifiManager::getMacAddress();
+        mac.replace(":", "");
+        
+        unsigned long nowUnix = millis() / 1000;
+        
+        char energyPayload[512];
+        snprintf(energyPayload, sizeof(energyPayload),
+          "{\"ts_start\":%lu,\"ts_end\":%lu,\"voltage_channels\":["
+            "{\"id\":1,\"ct\":["
+              "{\"id\":1,\"energy_wh\":%.1f,\"avg_power_w\":%.1f},"
+              "{\"id\":2,\"energy_wh\":%.1f,\"avg_power_w\":%.1f},"
+              "{\"id\":3,\"energy_wh\":%.1f,\"avg_power_w\":%.1f}"
+            "]},"
+            "{\"id\":2,\"ct\":["
+              "{\"id\":4,\"energy_wh\":%.1f,\"avg_power_w\":%.1f},"
+              "{\"id\":5,\"energy_wh\":%.1f,\"avg_power_w\":%.1f}"
+            "]},"
+            "{\"id\":3,\"ct\":["
+              "{\"id\":6,\"energy_wh\":%.1f,\"avg_power_w\":%.1f},"
+              "{\"id\":7,\"energy_wh\":%.1f,\"avg_power_w\":%.1f}"
+            "]}"
+          "]}",
+          nowUnix - 60, nowUnix,
+          random(200, 800) / 10.0, random(100, 500) / 1.0,
+          random(100, 500) / 10.0, random(50, 300) / 1.0,
+          random(50, 300) / 10.0, random(20, 200) / 1.0,
+          random(50, 400) / 10.0, random(30, 250) / 1.0,
+          random(30, 250) / 10.0, random(20, 150) / 1.0,
+          random(100, 600) / 10.0, random(60, 350) / 1.0,
+          random(10, 200) / 10.0, random(10, 120) / 1.0
+        );
           
-          // Generate a JSON array payload for exactly 3 mock channels
-          char payload[512];
-          snprintf(payload, sizeof(payload), 
-            "{\"channels\":["
-              "{\"id\":1, \"energy_wh\":%.1f, \"avg_power_w\":%.1f},"
-              "{\"id\":2, \"energy_wh\":%.1f, \"avg_power_w\":%.1f},"
-              "{\"id\":3, \"energy_wh\":%.1f, \"avg_power_w\":%.1f}"
-            "]}", 
-            random(500, 1500) / 10.0, random(10, 100) / 1.0,
-            random(50, 800) / 10.0, random(5, 50) / 1.0,
-            random(10, 500) / 10.0, random(1, 30) / 1.0
-          );
-            
-          Serial.printf("\n[Main] ------ MINUTE TICK ------\n");
-          Serial.printf("[Main] Generating & Sending telemetry for MAC: %s\n", mac.c_str());
-          Serial.printf("[Main] JSON Payload: %s\n", payload);
-          
-          bool success = MqttClient::publishTelemetry(mac.c_str(), payload);
-          if (success) {
-            Serial.println("[Main] Telemetry data successfully handed off to MQTT Broker!");
-          } else {
-            Serial.println("[Main] Failed to send telemetry data to MQTT Broker.");
-          }
-          Serial.println("[Main] --------------------------\n");
+        Serial.printf("\n[Main] ------ MINUTE TICK ------\n");
+        Serial.printf("[Main] Publishing energy data for MAC: %s\n", mac.c_str());
+        
+        bool success = MqttClient::publishEnergy(mac.c_str(), energyPayload);
+        if (success) {
+          Serial.println("[Main] Energy data sent to bems/<mac>/energy");
+        } else {
+          Serial.println("[Main] Failed to send energy data");
+        }
+        Serial.println("[Main] --------------------------\n");
       }
       
       // Check WiFi health

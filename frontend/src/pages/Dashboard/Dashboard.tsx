@@ -80,6 +80,8 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+
+
       {!activeDeviceId ? (
         <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
           Please select a device from the topbar to view its editable dashboard widgets.
