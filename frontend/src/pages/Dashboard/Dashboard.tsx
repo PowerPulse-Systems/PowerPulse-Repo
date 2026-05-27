@@ -116,46 +116,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-3 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-            <span>HTTP Current</span>
-            <Activity className="h-4 w-4 text-blue-500" />
-          </div>
-          <div className="text-3xl font-bold text-slate-900 dark:text-white">
-            {latestReading ? latestReading.current.toFixed(2) : '--'}
-            <span className="ml-2 text-sm font-medium text-slate-500">A</span>
-          </div>
-        </div>
 
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-3 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-            <span>HTTP Voltage</span>
-            <Bolt className="h-4 w-4 text-amber-500" />
-          </div>
-          <div className="text-3xl font-bold text-slate-900 dark:text-white">
-            {latestReading ? latestReading.voltage.toFixed(1) : '--'}
-            <span className="ml-2 text-sm font-medium text-slate-500">V</span>
-          </div>
-        </div>
-
-        <div className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
-          <div className="mb-3 flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
-            <span>Last HTTP Packet</span>
-            <Clock className="h-4 w-4 text-emerald-500" />
-          </div>
-          <div className="text-sm font-medium text-slate-900 dark:text-white">
-            {latestReading
-              ? new Date(latestReading.receivedAt).toLocaleString()
-              : telemetryError || 'No packet received yet'}
-          </div>
-          {latestReading && (
-            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-              {latestReading.deviceId} · {latestReading.power.toFixed(1)} W
-            </div>
-          )}
-        </div>
-      </div>
 
       {!activeDeviceId ? (
         <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">
