@@ -11,4 +11,9 @@ export class WidgetsController {
   getWidgetValue(@Body() widgetConfig: any) {
     return this.widgetsService.getWidgetValue(widgetConfig);
   }
+
+  @Post('series')
+  getWidgetSeries(@Body() widgetConfig: any) {
+    return this.widgetsService.getWidgetSeries(widgetConfig);
+  }
 }

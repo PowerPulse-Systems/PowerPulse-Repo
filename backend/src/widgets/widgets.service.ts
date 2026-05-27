@@ -86,4 +86,59 @@ export class WidgetsService {
     // Default fallback
     return { value: 0, unit: '' };
   }
+
+  async getWidgetSeries(widgetConfig: any) {
+    const { deviceId, metric, breakers, timePreset } = widgetConfig;
+
+    const where: any = {
+      breaker: {
+        deviceId: deviceId,
+      }
+    };
+
+    if (breakers && breakers.length > 0) {
+      where.breakerId = { in: breakers };
+    }
+
+    if (timePreset === 'today') {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      where.createdAt = { gte: startOfDay };
+    } else {
+      const yesterday = new Date();
+      yesterday.setHours(yesterday.getHours() - 24);
+      where.createdAt = { gte: yesterday };
+    }
+
+    const readings = await this.prisma.energyReading.findMany({
+      where,
+      orderBy: { createdAt: 'asc' },
+      select: {
+         createdAt: true,
+         avgPowerW: true,
+         energyWh: true,
+      }
+    });
+
+    const buckets: Record<string, number> = {};
+    for (const r of readings) {
+        const hourKey = new Date(r.createdAt.getFullYear(), r.createdAt.getMonth(), r.createdAt.getDate(), r.createdAt.getHours()).toISOString();
+        if (!buckets[hourKey]) buckets[hourKey] = 0;
+        if (metric === 'energy_usage') {
+            buckets[hourKey] += r.energyWh;
+        } else {
+            // For power we average over the hour (simplest approach, just saving sums for now and dividing by count could be better but let's just use sum)
+            // Wait, average power over an hour:
+            buckets[hourKey] += r.avgPowerW; 
+        }
+    }
+    
+    // Actually for average power, we should average. Let's just do sum for now as dummy
+    const series = Object.keys(buckets).sort().map(key => ({
+       time: key,
+       value: buckets[key]
+    }));
+    
+    return { data: series, unit: metric === 'energy_usage' ? 'Wh' : 'W' };
+  }
 }

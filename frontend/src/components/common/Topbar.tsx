@@ -20,6 +20,14 @@ const Topbar: React.FC = () => {
   const selectedDevice = devices.find(d => d.id === activeDeviceId);
 
   const [addDeviceModalOpen, setAddDeviceModalOpen] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (token) {
@@ -145,6 +153,14 @@ const Topbar: React.FC = () => {
         )}
       </div>
       <div className="flex items-center space-x-4">
+        <div className="hidden md:flex flex-col items-end mr-2">
+          <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </span>
+          <span className="text-xs text-slate-500 dark:text-slate-400">
+            {currentTime.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+          </span>
+        </div>
         <div className="relative">
           <button
             type="button"
