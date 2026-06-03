@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useDashboardStore } from '../../store/useDashboardStore';
 import ResponsiveWidgetGrid from '../../components/dashboard/WidgetGrid';
 import WidgetConfigModal from '../../components/dashboard/WidgetConfigModal';
+import { EnergyConsumptionChart } from '../../components/dashboard/EnergyConsumptionChart';
 import { Widget } from '../../types/dashboard';
 import { Save, X, Plus } from 'lucide-react';
 
@@ -80,7 +81,7 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-
+      <EnergyConsumptionChart />
 
       {!activeDeviceId ? (
         <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-slate-300 bg-white text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-500">

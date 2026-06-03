@@ -108,31 +108,62 @@ const StatCardWidget: React.FC<StatCardWidgetProps> = ({ widget, deviceId }) => 
     return data.value.toLocaleString(undefined, { maximumFractionDigits: 1 });
   };
 
+  const getBgColor = () => {
+    switch (widget.metric) {
+      case 'energy_usage': return 'bg-blue-50 border-blue-100 dark:bg-slate-900 dark:border-slate-800';
+      case 'current_load': return 'bg-emerald-50 border-emerald-100 dark:bg-slate-900 dark:border-slate-800';
+      case 'power': return 'bg-violet-50 border-violet-100 dark:bg-slate-900 dark:border-slate-800';
+      case 'voltage': return 'bg-amber-50 border-amber-100 dark:bg-slate-900 dark:border-slate-800';
+      default: return 'bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800';
+    }
+  };
+
+  const getTextColor = () => {
+    switch (widget.metric) {
+      case 'energy_usage': return 'text-blue-900 dark:text-white';
+      case 'current_load': return 'text-emerald-900 dark:text-white';
+      case 'power': return 'text-violet-900 dark:text-white';
+      case 'voltage': return 'text-amber-900 dark:text-white';
+      default: return 'text-slate-900 dark:text-white';
+    }
+  };
+
+  const getSubTextColor = () => {
+    switch (widget.metric) {
+      case 'energy_usage': return 'text-blue-600/80 dark:text-slate-400';
+      case 'current_load': return 'text-emerald-600/80 dark:text-slate-400';
+      case 'power': return 'text-violet-600/80 dark:text-slate-400';
+      case 'voltage': return 'text-amber-600/80 dark:text-slate-400';
+      default: return 'text-slate-500 dark:text-slate-400';
+    }
+  };
+
   return (
     <div className={cn(
-      "h-full w-full flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-sm transition-all",
+      "h-full w-full flex flex-col border rounded-xl overflow-hidden shadow-sm transition-all",
+      getBgColor(),
       widget.size === 'small' ? 'p-4' : 'p-6'
     )}>
       <div className="flex items-start justify-between">
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-slate-500 dark:text-slate-400 line-clamp-1">
+          <span className={cn("text-sm font-medium line-clamp-1", getSubTextColor())}>
             {widget.title}
           </span>
           <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            <span className={cn("text-3xl font-bold tracking-tight", getTextColor())}>
               {getFormattedValue()}
             </span>
-            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
+            <span className={cn("text-sm font-medium", getSubTextColor())}>
               {data?.unit}
             </span>
           </div>
         </div>
-        <div className="p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
+        <div className="p-2 bg-white/60 dark:bg-slate-800/80 rounded-lg shadow-sm backdrop-blur-sm">
           {getIcon()}
         </div>
       </div>
       
-      <div className="mt-auto pt-4 flex items-center text-xs text-slate-500 dark:text-slate-400">
+      <div className={cn("mt-auto pt-4 flex items-center text-xs", getSubTextColor())}>
         {isLive ? (
           <span className="flex items-center gap-1.5">
             <span className={cn(
