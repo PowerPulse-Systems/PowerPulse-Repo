@@ -1,0 +1,242 @@
+/*
+ * =====================================================
+ *  Combined Energy Monitor
+ *  - V1, V2, V3  : EmonLib voltage sensors
+ *  - I1          : EmonLib current sensor  (GPIO 34)
+ *  - I2, I3, I4, I5 : ADS1115 ch0–ch3
+ *
+ *  OLED Layout (128x64, text size 1, rows ~8px each)
+ *  ┌──────────────────────────────┐
+ *  │ V1:230.5V    V2:231.1V       │  row 0
+ *  │ V3:229.8V                    │  row 10
+ *  │──────────────────────────────│
+ *  │ I1:  2.34A   I2:  1.12A      │  row 22
+ *  │ I3:  0.85A   I4:  3.20A      │  row 32
+ *  │ I5:  1.55A                   │  row 42
+ *  └──────────────────────────────┘
+ * =====================================================
+ */
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_ADS1X15.h>
+#include "EmonLib.h"
+
+// =====================================================
+//  OLED
+// =====================================================
+#define SCREEN_WIDTH  128
+#define SCREEN_HEIGHT  64
+#define OLED_RESET     -1
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+// =====================================================
+//  ADS1115
+// =====================================================
+Adafruit_ADS1115 ads;
+
+// =====================================================
+//  EMON OBJECTS
+// =====================================================
+EnergyMonitor emonV1;
+EnergyMonitor emonV2;
+EnergyMonitor emonV3;
+EnergyMonitor emonI1;   // I1 on GPIO 34
+
+// =====================================================
+//  CURRENT CALIBRATION  (ADS1115 channels)
+// =====================================================
+const float ICAL_CH0 = 0.000585f;   // I2
+const float ICAL_CH1 = 0.000585f;   // I3
+const float ICAL_CH2 = 0.00340f;    // I4
+const float ICAL_CH3 = 0.00340f;    // I5
+
+// =====================================================
+//  SETTINGS
+// =====================================================
+const float I_NOISE        = 0.05f;
+const int   ADS_SAMPLES    = 20;
+const int   DISPLAY_INTERVAL = 200;  // ms
+
+// =====================================================
+//  ADS1115 RMS MEASUREMENT
+// =====================================================
+float measureADSCurrent(uint8_t chan, float iCal) {
+  float meanI = 0.0f;
+  float sumI2 = 0.0f;
+
+  // Priming: DC offset estimate
+  for (int n = 0; n < 10; n++) {
+    float ri = (float)ads.readADC_SingleEnded(chan);
+    meanI += (ri - meanI) / (n + 1);
+  }
+
+  // RMS accumulation
+  for (int n = 0; n < ADS_SAMPLES; n++) {
+    float ri = (float)ads.readADC_SingleEnded(chan);
+    meanI += (ri - meanI) * 0.05f;
+    float i = ri - meanI;
+    sumI2 += i * i;
+  }
+
+  float Irms = sqrtf(sumI2 / ADS_SAMPLES) * iCal;
+  return (Irms < I_NOISE) ? 0.0f : Irms;
+}
+
+// =====================================================
+//  SETUP
+// =====================================================
+void setup() {
+  Serial.begin(115200);
+
+  Wire.begin();
+  Wire.setClock(400000);
+
+  // ---------- OLED ----------
+  if (!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+    Serial.println("OLED FAILED");
+    while (1);
+  }
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+  display.setCursor(15, 24);
+  display.println("Initializing...");
+  display.display();
+
+  // ---------- ADS1115 ----------
+  if (!ads.begin()) {
+    Serial.println("ADS1115 FAILED");
+    display.clearDisplay();
+    display.setCursor(0, 24);
+    display.println("ADS1115 FAILED!");
+    display.display();
+    while (1);
+  }
+  ads.setGain(GAIN_ONE);            // ±4.096 V
+  ads.setDataRate(RATE_ADS1115_860SPS);
+
+  // ---------- VOLTAGE SENSORS ----------
+   // V2 → GPIO 33
+  emonV3.voltage(35, 60.20, 1.7);   // V3 → GPIO 35
+// AFTER
+emonV1.voltage(32, 64.27, 1.7);   // V1 → GPIO 32  (212V→236.9V corrected)
+emonV2.voltage(33, 57.40, 1.7);  
+  // ---------- EMON CURRENT (I1) ----------
+  emonI1.current(34, 7.09);         // I1 → GPIO 34
+
+  // ---------- WARMUP ----------
+  display.clearDisplay();
+  display.setCursor(10, 24);
+  display.println("Please wait...");
+  display.display();
+
+  for (int i = 0; i < 3; i++) {
+    emonV1.calcVI(20, 1000);
+    emonV2.calcVI(20, 1000);
+    emonV3.calcVI(20, 1000);
+    delay(200);
+  }
+
+  Serial.println("System Ready");
+}
+
+// =====================================================
+//  LOOP
+// =====================================================
+void loop() {
+
+  // -------- VOLTAGES --------
+  emonV1.calcVI(20, 1000);
+  float v1 = emonV1.Vrms;
+
+  emonV2.calcVI(20, 1000);
+  float v2 = emonV2.Vrms;
+
+  emonV3.calcVI(20, 1000);
+  float v3 = emonV3.Vrms;
+
+  // Reject noise
+  if (v1 < 80) v1 = 0;
+  if (v2 < 80) v2 = 0;
+  if (v3 < 80) v3 = 0;
+
+  // -------- I1 (EmonLib) --------
+  float i1 = (float)emonI1.calcIrms(800);
+  if (i1 < 0.10f) i1 = 0;
+
+  // -------- I2–I5 (ADS1115) --------
+  float i2 = measureADSCurrent(0, ICAL_CH0);
+  float i3 = measureADSCurrent(1, ICAL_CH1);
+  float i4 = measureADSCurrent(2, ICAL_CH2);
+  float i5 = measureADSCurrent(3, ICAL_CH3);
+
+  // -------- SERIAL --------
+  Serial.printf("V1: %6.1f V   V2: %6.1f V   V3: %6.1f V\n", v1, v2, v3);
+  Serial.printf("I1: %5.2f A   I2: %5.2f A   I3: %5.2f A   I4: %5.2f A   I5: %5.2f A\n",
+                i1, i2, i3, i4, i5);
+  Serial.println("-------------------------------------------");
+
+  // -------- OLED --------
+  static unsigned long lastDisplay = 0;
+  if (millis() - lastDisplay >= DISPLAY_INTERVAL) {
+    lastDisplay = millis();
+
+    display.clearDisplay();
+    display.setTextSize(1);
+
+    // --- Voltage rows ---
+    // Row 0: V1 | V2
+    display.setCursor(0, 0);
+    display.print("V1:");
+    display.print(v1, 1);
+    display.print("V");
+
+    display.setCursor(68, 0);
+    display.print("V2:");
+    display.print(v2, 1);
+    display.print("V");
+
+    // Row 10: V3
+    display.setCursor(0, 10);
+    display.print("V3:");
+    display.print(v3, 1);
+    display.print("V");
+
+    // Separator line
+    display.drawFastHLine(0, 19, 128, SSD1306_WHITE);
+
+    // --- Current rows ---
+    // Row 22: I1 | I2
+    display.setCursor(0, 22);
+    display.print("I1:");
+    display.print(i1, 2);
+    display.print("A");
+
+    display.setCursor(68, 22);
+    display.print("I2:");
+    display.print(i2, 2);
+    display.print("A");
+
+    // Row 33: I3 | I4
+    display.setCursor(0, 33);
+    display.print("I3:");
+    display.print(i3, 2);
+    display.print("A");
+
+    display.setCursor(68, 33);
+    display.print("I4:");
+    display.print(i4, 2);
+    display.print("A");
+
+    // Row 44: I5
+    // display.setCursor(0, 44);
+    // display.print("I5:");
+    // display.print(i5, 2);
+    // display.print("A");
+
+    display.display();
+  }
+}
