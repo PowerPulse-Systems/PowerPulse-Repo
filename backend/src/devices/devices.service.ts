@@ -50,9 +50,28 @@ export class DevicesService implements OnModuleInit, OnModuleDestroy {
    * If the device already exists (by MAC), return the existing record.
    */
   async register(macAddress: string, type: string, name?: string, firmwareVersion?: string) {
-    const existing = await this.prisma.device.findUnique({
-      where: { macAddress },
+    const normalizedMac = macAddress.replace(/:/g, '').toUpperCase();
+    
+    let existing = await this.prisma.device.findUnique({
+      where: { macAddress: normalizedMac },
     });
+
+    // Fallback: Check if it was registered with colons or lowercase
+    if (!existing) {
+      existing = await this.prisma.device.findFirst({
+        where: {
+          macAddress: { mode: 'insensitive', equals: macAddress }
+        }
+      });
+      
+      if (existing && existing.macAddress !== normalizedMac) {
+        // Upgrade it to normalized
+        existing = await this.prisma.device.update({
+          where: { id: existing.id },
+          data: { macAddress: normalizedMac }
+        });
+      }
+    }
 
     if (existing) {
       this.logger.log(`Device ${macAddress} already registered, returning existing`);
@@ -204,16 +223,32 @@ export class DevicesService implements OnModuleInit, OnModuleDestroy {
    * Update device online status (called from MQTT service).
    */
   async updateStatus(macAddress: string, online: boolean) {
+    const normalizedMac = macAddress.replace(/:/g, '').toUpperCase();
     try {
-      const device = await this.prisma.device.update({
-        where: { macAddress },
-        data: {
-          onlineStatus: online,
-          lastSeen: new Date(),
-        },
-      });
-      this.logger.log(`Device ${macAddress} status → ${online ? 'ONLINE' : 'OFFLINE'}`);
-      return device;
+      let device = await this.prisma.device.findUnique({ where: { macAddress: normalizedMac } });
+      
+      if (!device) {
+         // Fallback for non-normalized mac
+         device = await this.prisma.device.findFirst({
+           where: { macAddress: { mode: 'insensitive', equals: macAddress } }
+         });
+      }
+      
+      if (device) {
+        const updated = await this.prisma.device.update({
+          where: { id: device.id },
+          data: {
+            macAddress: normalizedMac, // Ensure it's normalized
+            onlineStatus: online,
+            lastSeen: new Date(),
+          },
+        });
+        this.logger.log(`Device ${normalizedMac} status → ${online ? 'ONLINE' : 'OFFLINE'}`);
+        return updated;
+      }
+      
+      this.logger.warn(`Could not update status for device ${normalizedMac}: not found`);
+      return null;
     } catch (error) {
       this.logger.warn(`Could not update status for device ${macAddress}: not found`);
       return null;
