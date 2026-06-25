@@ -5,7 +5,7 @@
 CT_Config_t CT_GetDefaultConfig(float vref)
 {
   CT_Config_t cfg;
-  cfg.amps_per_volt    = 30.0f;
+  cfg.amps_per_volt    = 25.0f;
   cfg.cal_factor       = 1.0f;
   cfg.noise_variance   = 0.0f;
   cfg.vref             = vref;
@@ -21,11 +21,11 @@ void CT_CalibrateBias(ADC_HandleTypeDef *hadc, const CT_Config_t *config)
   (void)config;
 }
 
-static float compute_variance(ADC_HandleTypeDef *hadc, const CT_Config_t *config)
+static float measure_variance(ADC_HandleTypeDef *hadc, const CT_Config_t *config)
 {
   float adc_to_volts = config->vref / (float)config->adc_max;
-  float mean = 0.0f;
-  float m2   = 0.0f;
+  float sum = 0.0f;
+  float sum_sq = 0.0f;
   uint16_t count = 0;
 
   for (uint16_t i = 0; i < config->num_samples; i++)
@@ -35,30 +35,32 @@ static float compute_variance(ADC_HandleTypeDef *hadc, const CT_Config_t *config
     {
       uint16_t raw = (uint16_t)HAL_ADC_GetValue(hadc);
       float v = (float)raw * adc_to_volts;
+      sum += v;
+      sum_sq += v * v;
       count++;
-      float delta = v - mean;
-      mean += delta / (float)count;
-      m2   += delta * (v - mean);
     }
     HAL_ADC_Stop(hadc);
   }
 
   if (count > 1)
-    return m2 / (float)(count);
-  else
-    return 0.0f;
+  {
+    float mean = sum / (float)count;
+    float var  = sum_sq / (float)count - mean * mean;
+    return (var > 0.0f) ? var : 0.0f;
+  }
+  return 0.0f;
 }
 
 void CT_CalibrateZero(ADC_HandleTypeDef *hadc, CT_Config_t *config)
 {
-  config->noise_variance = compute_variance(hadc, config);
+  config->noise_variance = measure_variance(hadc, config);
 }
 
 CT_Result_t CT_ReadRMS(ADC_HandleTypeDef *hadc, const CT_Config_t *config)
 {
   CT_Result_t result = {0};
 
-  float total_variance = compute_variance(hadc, config);
+  float total_variance = measure_variance(hadc, config);
 
   float signal_variance = total_variance - config->noise_variance;
   if (signal_variance < 0.0f) signal_variance = 0.0f;
@@ -72,14 +74,13 @@ CT_Result_t CT_ReadRMS(ADC_HandleTypeDef *hadc, const CT_Config_t *config)
     result.power_apparent = result.i_rms * config->mains_voltage;
 
   result.samples_taken = (uint16_t)(config->num_samples);
-
   return result;
 }
 
 void CT_SendResult(UART_HandleTypeDef *huart, const CT_Result_t *result)
 {
   char buf[64];
-  int len = snprintf(buf, sizeof(buf), "CT_RMS: %.3f A | P: %.1f W\r\n",
+  int len = snprintf(buf, sizeof(buf), "CT_RMS: %.2f A | P: %.1f W\r\n",
                      result->i_rms, result->power_apparent);
   if (len > 0)
     HAL_UART_Transmit(huart, (uint8_t *)buf, (uint16_t)len, 50);
