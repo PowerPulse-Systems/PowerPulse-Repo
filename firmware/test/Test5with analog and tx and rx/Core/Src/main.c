@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "adc_methods.h"
+#include "ct_sensor.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -36,9 +37,11 @@
  * Uncomment ONE of the lines below to choose your ADC method:
  *   ADC_USE_OVERSAMPLED  -> 14-bit oversampling + decimation (finer resolution)
  *   ADC_USE_AVERAGED     -> 12-bit software averaging (noise reduction)
+ *   ADC_USE_CT_RMS       -> CT sensor true RMS current measurement
  */
 // #define ADC_USE_OVERSAMPLED
-#define ADC_USE_AVERAGED
+#define ADC_USE_CT_RMS
+// #define ADC_USE_CT_RMS
 
 #define VREF  3.3f   // Measure your 3.3V pin with a multimeter and put the real value here
 /* USER CODE END PD */
@@ -54,8 +57,10 @@ ADC_HandleTypeDef hadc1;
 UART_HandleTypeDef huart1;
 
 /* USER CODE BEGIN PV */
-volatile uint16_t adc_raw     = 0;     // Raw ADC count (watch in Live Expressions)
-volatile float    adc_voltage = 0.0f;  // Converted voltage in volts
+volatile uint16_t adc_raw        = 0;     // Raw ADC count (watch in Live Expressions)
+volatile float    adc_voltage    = 0.0f;  // Converted voltage in volts
+volatile float    current_rms    = 0.0f;  // RMS current in Amps (CT mode)
+volatile float    power_apparent = 0.0f;  // Apparent power in Watts (CT mode)
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,6 +110,27 @@ int main(void)
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED);
+
+#ifdef ADC_USE_CT_RMS
+  /* --- Your sensor: 1V RMS = 30A → use direct mapping --- */
+  CT_Config_t ct_cfg = CT_GetDirectMapConfig(VREF, 30.0f);
+
+  /* Calibrated from real measurement: 0.413A actual / 48.095A raw = 0.00859 */
+  ct_cfg.cal_factor = 0.00859f;
+
+  /* Optional tweaks: */
+  // ct_cfg.mains_voltage = 230.0f;  // Change to 120.0f for US
+  // ct_cfg.num_samples   = 1000;    // ~2 cycles at 50Hz
+
+  /* Alternative: for current-output CTs (e.g. SCT-013-000), use this instead:
+   *   CT_Config_t ct_cfg = CT_GetDefaultConfig(VREF);
+   *   ct_cfg.ct_ratio    = 2000.0f;
+   *   ct_cfg.burden_ohms = 33.0f;
+   */
+
+  /* Calibrate DC bias (ensure NO current is flowing through CT at startup) */
+  CT_CalibrateBias(&hadc1, &ct_cfg);
+#endif
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -115,18 +141,33 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-#ifdef ADC_USE_OVERSAMPLED
-    ADC_Result_t result = ADC_ReadOversampled(&hadc1, VREF);
-#else
-    ADC_Result_t result = ADC_ReadAveraged(&hadc1, VREF);
-#endif
+#ifdef ADC_USE_CT_RMS
+    /* ---- CT Sensor RMS Mode ---- */
+    CT_Result_t ct_result = CT_ReadRMS(&hadc1, &ct_cfg);
 
     /* Update globals for Live Expressions */
+    current_rms    = ct_result.i_rms;
+    power_apparent = ct_result.power_apparent;
+    adc_voltage    = ct_result.v_rms_sensor;
+
+    /* Send to ESP32 */
+    CT_SendResult(&huart1, &ct_result);
+
+#elif defined(ADC_USE_OVERSAMPLED)
+    /* ---- 14-bit Oversampling Mode ---- */
+    ADC_Result_t result = ADC_ReadOversampled(&hadc1, VREF);
     adc_raw     = result.raw;
     adc_voltage = result.voltage;
-
-    /* Send tagged packet to ESP32 */
     ADC_SendResult(&huart1, &result);
+
+#else
+    /* ---- 12-bit Averaging Mode (default) ---- */
+    ADC_Result_t result = ADC_ReadAveraged(&hadc1, VREF);
+    adc_raw     = result.raw;
+    adc_voltage = result.voltage;
+    ADC_SendResult(&huart1, &result);
+
+#endif
 
     HAL_Delay(100);
   }

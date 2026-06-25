@@ -80,6 +80,48 @@ void loop() {
       }
     }
 
+    // --- CT Sensor RMS format: "CT_RMS: <amps> A | P: <watts> W" ---
+    else if (line.startsWith("CT_RMS:")) {
+
+      // Extract current value after "CT_RMS: "
+      int pipeIdx = line.indexOf('|');
+      String ampsStr;
+
+      if (pipeIdx > 0) {
+        ampsStr = line.substring(8, pipeIdx);  // after "CT_RMS: "
+      } else {
+        ampsStr = line.substring(8);
+      }
+
+      // Remove " A" suffix if present
+      int aIdx = ampsStr.indexOf('A');
+      if (aIdx > 0) ampsStr = ampsStr.substring(0, aIdx);
+      ampsStr.trim();
+
+      float amps = ampsStr.toFloat();
+
+      Serial.print("[CT RMS]  Current: ");
+      Serial.print(amps, 3);
+      Serial.print(" A");
+
+      // Extract power if present
+      if (pipeIdx > 0) {
+        int pIdx = line.indexOf("P:", pipeIdx);
+        if (pIdx > 0) {
+          String wattsStr = line.substring(pIdx + 2);
+          int wIdx = wattsStr.indexOf('W');
+          if (wIdx > 0) wattsStr = wattsStr.substring(0, wIdx);
+          wattsStr.trim();
+
+          float watts = wattsStr.toFloat();
+          Serial.print("  |  Power: ");
+          Serial.print(watts, 1);
+          Serial.print(" W");
+        }
+      }
+      Serial.println();
+    }
+
     // --- Legacy format: "ANALOG: <raw>" (backward compatible) ---
     else if (line.startsWith("ANALOG:")) {
       String value_str = line.substring(8);
