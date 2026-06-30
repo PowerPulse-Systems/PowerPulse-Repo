@@ -1,9 +1,9 @@
 export type WidgetType = 'card' | 'graph' | 'alerts';
-export type WidgetMetric = 'energy_usage' | 'current_load' | 'power' | 'voltage';
+export type WidgetMetric = 'energy_usage' | 'current_load' | 'power' | 'voltage' | 'power_factor';
 export type WidgetSize = 'small' | 'medium' | 'large' | 'full';
 
 /** Metrics that use the live WebSocket stream (display-only, not stored) */
-export const LIVE_METRICS: WidgetMetric[] = ['power', 'current_load', 'voltage'];
+export const LIVE_METRICS: WidgetMetric[] = ['power', 'current_load', 'voltage', 'power_factor'];
 
 /** Metrics that use historical REST API (stored in database) */
 export const HISTORICAL_METRICS: WidgetMetric[] = ['energy_usage'];
@@ -44,6 +44,7 @@ export interface LiveChannelReading {
   id: number;
   i: number;   // Current RMS (A)
   p: number;   // Power (W)
+  pf?: number; // Power Factor
 }
 
 export interface LiveVoltageChannel {

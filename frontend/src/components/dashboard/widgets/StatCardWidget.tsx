@@ -58,6 +58,9 @@ const StatCardWidget: React.FC<StatCardWidgetProps> = ({ widget, deviceId }) => 
     } else if (widget.metric === 'current_load') {
       metric = 'current';
       unit = 'A';
+    } else if (widget.metric === 'power_factor') {
+      metric = 'power_factor';
+      unit = '';
     }
 
     const value = getAggregatedValue(channelIds, deviceMacs, metric);
@@ -99,12 +102,16 @@ const StatCardWidget: React.FC<StatCardWidgetProps> = ({ widget, deviceId }) => 
       case 'current_load': return <Zap className="w-5 h-5 text-emerald-500" />;
       case 'power': return <Gauge className="w-5 h-5 text-violet-500" />;
       case 'voltage': return <TrendingUp className="w-5 h-5 text-amber-500" />;
+      case 'power_factor': return <Activity className="w-5 h-5 text-teal-500" />;
       default: return <Activity className="w-5 h-5 text-slate-400" />;
     }
   };
 
   const getFormattedValue = () => {
     if (loading || !data) return '---';
+    if (widget.metric === 'power_factor') {
+      return data.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
     return data.value.toLocaleString(undefined, { maximumFractionDigits: 1 });
   };
 
