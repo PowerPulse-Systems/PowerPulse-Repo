@@ -1,0 +1,12 @@
+{
+	"folders": [
+		{
+			"path": "../../../.."
+		},
+		{
+			"name": "ESP ADC TEST",
+			"path": "."
+		}
+	],
+	"settings": {}
+}

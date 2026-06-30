@@ -1,0 +1,26 @@
+# STM32CubeIDE / Eclipse
+Debug/
+Release/
+*.launch
+.metadata/
+
+# Build artifacts
+*.o
+*.elf
+*.hex
+*.bin
+*.map
+*.lst
+*.su
+*.d
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Do not ignore these CubeMX / IDE project files
+!.cproject
+!.project
+!.mxproject
+!.settings/
+!*.ioc
