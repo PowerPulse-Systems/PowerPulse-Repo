@@ -2,13 +2,13 @@ import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { LiveTelemetryGateway } from './live-telemetry.gateway';
 
-/** In-memory representation of a single channel's live reading */
 export interface LiveChannelReading {
   channelId: number;   // Global current channel ID (matches Breaker.channelIndex)
   voltageId: number;   // Voltage input ID this channel belongs to
   voltage: number;     // Voltage RMS (V)
   current: number;     // Current RMS (A)
   power: number;       // Active power (W)
+  pf?: number;         // Power factor
 }
 
 /** In-memory live snapshot for a device */
@@ -84,22 +84,25 @@ export class TelemetryService {
    * Does NOT write to the database.
    */
   async processLiveData(macAddress: string, payload: any) {
+    const normalizedMac = macAddress.replace(/:/g, '').toUpperCase();
     try {
       const channels: LiveChannelReading[] = [];
 
       if (Array.isArray(payload.voltage_channels)) {
         for (const vc of payload.voltage_channels) {
           const voltageId = vc.id;
-          const voltage = vc.v || 0;
+          const voltage = vc.v !== undefined ? vc.v : (vc.vrms || 0);
 
-          if (Array.isArray(vc.ct)) {
-            for (const ct of vc.ct) {
+          const currents = vc.ct || vc.current_channels;
+          if (Array.isArray(currents)) {
+            for (const ct of currents) {
               channels.push({
                 channelId: ct.id,
                 voltageId,
                 voltage,
-                current: ct.i || 0,
-                power: ct.p || 0,
+                current: ct.i !== undefined ? ct.i : (ct.irms || 0),
+                power: ct.p !== undefined ? ct.p : (ct.power || 0),
+                pf: ct.pf || 1.0,
               });
             }
           }
@@ -108,20 +111,20 @@ export class TelemetryService {
 
       // Store in memory
       const snapshot: DeviceLiveSnapshot = {
-        macAddress,
+        macAddress: normalizedMac,
         channels,
         receivedAt: Date.now(),
       };
-      this.liveStore.set(macAddress, snapshot);
+      this.liveStore.set(normalizedMac, snapshot);
 
       // Broadcast to WebSocket clients in this device's room
-      this.liveGateway.broadcastLiveData(macAddress, {
+      this.liveGateway.broadcastLiveData(normalizedMac, {
         voltage_channels: payload.voltage_channels,
         timestamp: Date.now(),
       });
 
       // Refresh device status (reuse cached device lookup)
-      await this.refreshDeviceStatus(macAddress);
+      await this.refreshDeviceStatus(normalizedMac);
 
     } catch (error) {
       this.logger.error(`Error processing live telemetry: ${(error as Error).message}`);
@@ -133,7 +136,8 @@ export class TelemetryService {
    * Used by the REST fallback endpoint.
    */
   getLiveData(macAddress: string): DeviceLiveSnapshot | null {
-    return this.liveStore.get(macAddress) || null;
+    const normalizedMac = macAddress.replace(/:/g, '').toUpperCase();
+    return this.liveStore.get(normalizedMac) || null;
   }
 
   /**
@@ -185,20 +189,38 @@ export class TelemetryService {
    * Parses the voltage-grouped payload, auto-discovers channels, and stores in PostgreSQL.
    */
   async processEnergyData(macAddress: string, payload: any) {
+    const normalizedMac = macAddress.replace(/:/g, '').toUpperCase();
     try {
-      let device = this.deviceCache.get(macAddress);
+      let device = this.deviceCache.get(normalizedMac);
 
       if (!device) {
         device = await this.prisma.device.findUnique({
-          where: { macAddress },
+          where: { macAddress: normalizedMac },
           include: { breakers: true },
         });
+        
+        if (!device) {
+           device = await this.prisma.device.findFirst({
+             where: { macAddress: { mode: 'insensitive', equals: macAddress } },
+             include: { breakers: true }
+           });
+        }
 
         if (!device) {
-          this.logger.warn(`Device ${macAddress} not found in DB (energy)`);
+          this.logger.warn(`Device ${normalizedMac} not found in DB (energy)`);
           return;
         }
-        this.deviceCache.set(macAddress, device);
+        
+        // Normalize the MAC if it wasn't already
+        if (device.macAddress !== normalizedMac) {
+           device = await this.prisma.device.update({
+             where: { id: device.id },
+             data: { macAddress: normalizedMac },
+             include: { breakers: true }
+           });
+        }
+        
+        this.deviceCache.set(normalizedMac, device);
       }
 
       const tsStart = payload.ts_start || (Math.floor(Date.now() / 1000) - 60);
@@ -208,9 +230,10 @@ export class TelemetryService {
 
       if (Array.isArray(payload.voltage_channels)) {
         for (const vc of payload.voltage_channels) {
-          if (!Array.isArray(vc.ct)) continue;
+          const currents = vc.ct || vc.current_channels;
+          if (!Array.isArray(currents)) continue;
 
-          for (const ct of vc.ct) {
+          for (const ct of currents) {
             const channelId = typeof ct.id === 'string' ? parseInt(ct.id, 10) : ct.id;
 
             // Find or auto-create breaker for this channel
@@ -252,11 +275,59 @@ export class TelemetryService {
                   periodStart: tsStart,
                   periodEnd: tsEnd,
                   energyWh,
-                  avgPowerW: ct.avg_power_w || 0,
+                  avgPowerW: ct.avg_power_w !== undefined ? ct.avg_power_w : (ct.avg_power || 0),
                   peakPowerW: ct.peak_power_w || 0,
                 },
               });
             }
+          }
+        }
+      } else if (Array.isArray(payload.channels)) {
+        // Handle STM32 flat channels format
+        for (const channel of payload.channels) {
+          const channelId = typeof channel.id === 'string' ? parseInt(channel.id, 10) : channel.id;
+
+          let breakerRecord = device.breakers.find((db: any) => db.channelIndex === channelId);
+
+          if (!breakerRecord) {
+            let panel = await this.prisma.panel.findFirst();
+            if (!panel) {
+              const building = await this.prisma.building.create({
+                data: { name: 'Auto Building', address: 'System Generated' },
+              });
+              panel = await this.prisma.panel.create({
+                data: { name: 'Auto Panel', buildingId: building.id },
+              });
+            }
+
+            breakerRecord = await this.prisma.breaker.create({
+              data: {
+                label: `Channel ${channelId}`,
+                channelIndex: channelId,
+                deviceId: device.id,
+                panelId: panel.id,
+              },
+            });
+
+            device.breakers.push(breakerRecord);
+            cacheUpdated = true;
+          }
+
+          const energyWh = channel.energy_wh !== undefined
+            ? channel.energy_wh
+            : (channel.energy_kwh !== undefined ? channel.energy_kwh * 1000 : 0);
+
+          if (energyWh > 0 || channel.energy_wh !== undefined) {
+            await this.prisma.energyReading.create({
+              data: {
+                breakerId: breakerRecord.id,
+                periodStart: tsStart,
+                periodEnd: tsEnd,
+                energyWh,
+                avgPowerW: channel.avg_power_w !== undefined ? channel.avg_power_w : (channel.avg_power || 0),
+                peakPowerW: channel.peak_power_w || 0,
+              },
+            });
           }
         }
       }
@@ -266,11 +337,11 @@ export class TelemetryService {
           where: { id: device.id },
           data: { channelsCount: device.breakers.length },
         });
-        this.deviceCache.set(macAddress, device);
+        this.deviceCache.set(normalizedMac, device);
       }
 
-      await this.refreshDeviceStatus(macAddress);
-      this.logger.log(`Saved energy data for ${macAddress} (${payload.voltage_channels?.length || 0} voltage channels)`);
+      await this.refreshDeviceStatus(normalizedMac);
+      this.logger.log(`Saved energy data for ${normalizedMac} (${payload.voltage_channels?.length || 0} voltage channels)`);
 
     } catch (error) {
       this.logger.error(`Error processing energy telemetry: ${(error as Error).message}`);
@@ -330,26 +401,43 @@ export class TelemetryService {
    * if the payload contains voltage_channels, otherwise uses flat channel format.
    */
   async processDeviceTelemetry(macAddress: string, payload: any) {
+    const normalizedMac = macAddress.replace(/:/g, '').toUpperCase();
     // If the payload uses the new voltage-grouped format, route to processEnergyData
     if (payload.voltage_channels) {
-      return this.processEnergyData(macAddress, payload);
+      return this.processEnergyData(normalizedMac, payload);
     }
 
     // Otherwise, handle the legacy flat channel format
     try {
-      let device = this.deviceCache.get(macAddress);
+      let device = this.deviceCache.get(normalizedMac);
 
       if (!device) {
         device = await this.prisma.device.findUnique({
-          where: { macAddress },
+          where: { macAddress: normalizedMac },
           include: { breakers: true },
         });
+        
+        if (!device) {
+          device = await this.prisma.device.findFirst({
+            where: { macAddress: { mode: 'insensitive', equals: macAddress } },
+            include: { breakers: true }
+          });
+        }
 
         if (!device) {
-          this.logger.warn(`Device ${macAddress} not found in DB`);
+          this.logger.warn(`Device ${normalizedMac} not found in DB`);
           return;
         }
-        this.deviceCache.set(macAddress, device);
+        
+        if (device.macAddress !== normalizedMac) {
+           device = await this.prisma.device.update({
+             where: { id: device.id },
+             data: { macAddress: normalizedMac },
+             include: { breakers: true }
+           });
+        }
+        
+        this.deviceCache.set(normalizedMac, device);
       }
 
       const currentTimeUnix = Math.floor(Date.now() / 1000);
@@ -407,10 +495,10 @@ export class TelemetryService {
             where: { id: device.id },
             data: { channelsCount: device.breakers.length },
           });
-          this.deviceCache.set(macAddress, device);
+          this.deviceCache.set(normalizedMac, device);
         }
 
-        this.logger.log(`Saved dynamic ESP energy reading array for ${macAddress}`);
+        this.logger.log(`Saved dynamic ESP energy reading array for ${normalizedMac}`);
       }
       else if (payload.energy_kwh !== undefined) {
         let breakerRecord = device.breakers[0];
@@ -442,7 +530,7 @@ export class TelemetryService {
       }
 
       // Always update lastSeen & onlineStatus
-      await this.refreshDeviceStatus(macAddress);
+      await this.refreshDeviceStatus(normalizedMac);
 
     } catch (error) {
       this.logger.error(`Error processing ESP telemetry: ${(error as Error).message}`);
@@ -457,27 +545,36 @@ export class TelemetryService {
    * Update device lastSeen and onlineStatus in both DB and cache.
    */
   private async refreshDeviceStatus(macAddress: string) {
+    const normalizedMac = macAddress.replace(/:/g, '').toUpperCase();
     try {
-      let device = this.deviceCache.get(macAddress);
+      let device = this.deviceCache.get(normalizedMac);
       if (!device) {
         device = await this.prisma.device.findUnique({
-          where: { macAddress },
+          where: { macAddress: normalizedMac },
           include: { breakers: true },
         });
+        
+        if (!device) {
+           device = await this.prisma.device.findFirst({
+             where: { macAddress: { mode: 'insensitive', equals: macAddress } },
+             include: { breakers: true }
+           });
+        }
         if (!device) return;
       }
 
       const updatedDevice = await this.prisma.device.update({
         where: { id: device.id },
         data: {
+          macAddress: normalizedMac, // Ensure normalization
           onlineStatus: true,
           lastSeen: new Date(),
         },
         include: { breakers: true },
       });
-      this.deviceCache.set(macAddress, updatedDevice);
+      this.deviceCache.set(normalizedMac, updatedDevice);
     } catch (error) {
-      this.logger.error(`Error refreshing device status for ${macAddress}: ${(error as Error).message}`);
+      this.logger.error(`Error refreshing device status for ${normalizedMac}: ${(error as Error).message}`);
     }
   }
 }

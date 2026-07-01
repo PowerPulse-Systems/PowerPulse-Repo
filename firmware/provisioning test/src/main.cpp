@@ -25,6 +25,7 @@
 #include "ble_provisioning.h"
 #include "wifi_manager.h"
 #include "mqtt_client.h"
+#include <time.h>
 
 // ========================
 // State Machine
@@ -187,6 +188,29 @@ void connectWithStoredConfig() {
 
   wifiFailCount = 0;
 
+  // Initialize NTP time after WiFi connection
+  Serial.println("[Main] Syncing time via NTP...");
+  configTime(0, 0, "pool.ntp.org", "time.google.com", "time.windows.com");
+  
+  // Wait for time to sync
+  time_t now = time(nullptr);
+  int retryCount = 0;
+  // Wait up to 15 seconds for NTP sync
+  while (now < 1000000000 && retryCount < 30) {
+    delay(500);
+    Serial.print(".");
+    if (retryCount % 10 == 0) {
+      configTime(0, 0, "pool.ntp.org", "time.google.com", "time.windows.com");
+    }
+    now = time(nullptr);
+    retryCount++;
+  }
+  if (now >= 1000000000) {
+    Serial.println("\n[Main] Time synced successfully");
+  } else {
+    Serial.println("\n[Main] Time sync failed, using default");
+  }
+
   // MQTT
   currentState = DeviceState::MQTT_CONNECTING;
   LedStatus::mqttConnecting();
@@ -344,6 +368,24 @@ void loop() {
           MqttClient::publishProvisioningAck(mac.c_str());
           MqttClient::publishStatus(mac.c_str(), true);
   
+          // Sync NTP before normal operation
+          Serial.println("[Main] Syncing time via NTP...");
+          configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+          
+          time_t now = time(nullptr);
+          int retryCount = 0;
+          while (now < 24 * 3600 && retryCount < 10) {
+            delay(500);
+            Serial.print(".");
+            now = time(nullptr);
+            retryCount++;
+          }
+          if (now > 24 * 3600) {
+            Serial.println("\n[Main] Time synced successfully");
+          } else {
+            Serial.println("\n[Main] Time sync failed");
+          }
+
           Serial.println("[Main] Provisioning complete! Device is now permanently configured.");
           
           // Wait for the status notification to be sent, then stop BLE
@@ -351,8 +393,8 @@ void loop() {
           provisioningInProgress = false;
           currentState = DeviceState::NORMAL;
           LedStatus::normalOperation();
-          lastTelemetryTime = 0;
-          lastLiveTime = 0;
+          lastTelemetryTime = millis();
+          lastLiveTime = millis();
           Serial.println("[Main] Switched to normal operation mode");
       }
       
@@ -419,7 +461,12 @@ void loop() {
         String mac = WifiManager::getMacAddress();
         mac.replace(":", "");
         
-        unsigned long nowUnix = millis() / 1000;
+        time_t nowUnixT = time(nullptr);
+        unsigned long nowUnix = (unsigned long)nowUnixT;
+        if (nowUnix < 1000000000) {
+            // NTP failed or not synced, fallback to millis (this may lead to backend discarding data)
+            nowUnix = millis() / 1000;
+        }
         
         char energyPayload[512];
         snprintf(energyPayload, sizeof(energyPayload),

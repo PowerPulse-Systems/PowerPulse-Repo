@@ -248,6 +248,7 @@ const WidgetConfigModal: React.FC<WidgetConfigModalProps> = ({
                 <option value="power">Power (W)</option>
                 <option value="current_load">Current (A)</option>
                 <option value="voltage">Voltage (V)</option>
+                <option value="power_factor">Power Factor</option>
               </select>
             </div>
             

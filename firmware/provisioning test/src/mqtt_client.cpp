@@ -15,6 +15,7 @@ bool MqttClient::connect(const char* host, uint16_t port, const char* username, 
   espClient.setInsecure();
   
   mqttClient.setServer(host, port);
+  mqttClient.setBufferSize(2048); // Increase buffer size for larger payloads like energy data
   
   int retries = 0;
   while (!mqttClient.connected() && retries < MQTT_MAX_RETRIES) {

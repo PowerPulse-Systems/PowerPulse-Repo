@@ -1,0 +1,43 @@
+# STM32CubeIDE / Eclipse local metadata
+.settings/
+.metadata/
+.recommenders/
+
+# Build output directories
+Debug/
+Release/
+build/
+cmake-build-*/
+
+# Compiled objects and generated binaries
+*.o
+*.obj
+*.d
+*.su
+*.cyclo
+*.map
+*.elf
+*.hex
+*.bin
+*.list
+*.lst
+*.srec
+*.out
+*.axf
+
+# Debug/session artifacts
+*.launch
+*.jlink
+*.stldr
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS/editor clutter
+.DS_Store
+Thumbs.db
+desktop.ini

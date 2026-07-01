@@ -53,12 +53,14 @@ export function useLiveTelemetry(macAddresses: string[]) {
   const getAggregatedValue = useCallback((
     channelIds: number[],
     deviceMacs: string[],
-    metric: 'power' | 'voltage' | 'current'
+    metric: 'power' | 'voltage' | 'current' | 'power_factor'
   ): number => {
     let totalPower = 0;
     let totalCurrent = 0;
     let voltageSum = 0;
     let voltageCount = 0;
+    let pfSum = 0;
+    let pfCount = 0;
 
     for (const mac of deviceMacs) {
       const payload = liveData.get(mac);
@@ -71,6 +73,10 @@ export function useLiveTelemetry(macAddresses: string[]) {
             totalCurrent += ct.i;
             voltageSum += vc.v;
             voltageCount++;
+            if (ct.pf !== undefined) {
+              pfSum += ct.pf;
+              pfCount++;
+            }
           }
         }
       }
@@ -80,6 +86,7 @@ export function useLiveTelemetry(macAddresses: string[]) {
       case 'power': return totalPower;
       case 'current': return totalCurrent;
       case 'voltage': return voltageCount > 0 ? voltageSum / voltageCount : 0;
+      case 'power_factor': return pfCount > 0 ? pfSum / pfCount : 1.0;
       default: return 0;
     }
   }, [liveData]);
