@@ -287,7 +287,7 @@ export class DevicesService implements OnModuleInit, OnModuleDestroy {
   /**
    * Add a breaker to a device
    */
-  async addBreaker(deviceId: string, userId: string, label: string, phase?: string) {
+  async addBreaker(deviceId: string, userId: string, label: string, phase?: string, channelIndex?: number) {
     const device = await this.prisma.device.findUnique({ where: { id: deviceId } });
     if (!device) throw new NotFoundException(`Device not found`);
     if (device.userId !== userId) throw new ConflictException('You do not own this device');
@@ -309,6 +309,7 @@ export class DevicesService implements OnModuleInit, OnModuleDestroy {
       data: {
         label,
         phase: phase || null,
+        channelIndex: channelIndex !== undefined ? channelIndex : 1,
         deviceId,
         panelId: panel.id
       }

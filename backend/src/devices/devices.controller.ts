@@ -75,8 +75,8 @@ export class DevicesController {
    * POST /devices/:id/breakers
    */
   @Post(':id/breakers')
-  addBreaker(@Param('id') id: string, @Body() dto: { label: string; phase?: string }, @Request() req: any) {
-    return this.devicesService.addBreaker(id, req.user.userId, dto.label, dto.phase);
+  addBreaker(@Param('id') id: string, @Body() dto: { label: string; phase?: string; channelIndex?: number }, @Request() req: any) {
+    return this.devicesService.addBreaker(id, req.user.userId, dto.label, dto.phase, dto.channelIndex);
   }
 
   /**
