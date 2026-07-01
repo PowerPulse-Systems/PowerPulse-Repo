@@ -67,6 +67,7 @@ export function useLiveTelemetry(macAddresses: string[]) {
       if (!payload?.voltage_channels) continue;
 
       for (const vc of payload.voltage_channels) {
+        if (!Array.isArray(vc.ct)) continue;
         for (const ct of vc.ct) {
           if (channelIds.length === 0 || channelIds.includes(ct.id)) {
             totalPower += ct.p;
