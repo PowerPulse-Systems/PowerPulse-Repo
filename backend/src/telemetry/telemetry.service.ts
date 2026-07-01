@@ -118,8 +118,23 @@ export class TelemetryService {
       this.liveStore.set(normalizedMac, snapshot);
 
       // Broadcast to WebSocket clients in this device's room
+      // Normalize field names to match frontend LivePayload type
+      const normalizedChannels = (payload.voltage_channels || []).map((vc: any) => {
+        const currents = vc.ct || vc.current_channels || [];
+        return {
+          id: vc.id,
+          v: vc.v !== undefined ? vc.v : (vc.vrms || 0),
+          ct: Array.isArray(currents) ? currents.map((ct: any) => ({
+            id: ct.id,
+            i: ct.i !== undefined ? ct.i : (ct.irms || 0),
+            p: ct.p !== undefined ? ct.p : (ct.power || 0),
+            pf: ct.pf || 1.0,
+          })) : [],
+        };
+      });
+
       this.liveGateway.broadcastLiveData(normalizedMac, {
-        voltage_channels: payload.voltage_channels,
+        voltage_channels: normalizedChannels,
         timestamp: Date.now(),
       });
 
@@ -563,12 +578,22 @@ export class TelemetryService {
         if (!device) return;
       }
 
+      const now = new Date();
+      
+      // Throttle DB updates to once every 60 seconds to prevent connection pooling timeouts
+      if (device.lastSeen && device.onlineStatus === true) {
+        const timeSinceLastSeen = now.getTime() - device.lastSeen.getTime();
+        if (timeSinceLastSeen < 60000) {
+          return;
+        }
+      }
+
       const updatedDevice = await this.prisma.device.update({
         where: { id: device.id },
         data: {
           macAddress: normalizedMac, // Ensure normalization
           onlineStatus: true,
-          lastSeen: new Date(),
+          lastSeen: now,
         },
         include: { breakers: true },
       });
