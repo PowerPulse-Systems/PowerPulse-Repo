@@ -47,7 +47,10 @@ const StatCardWidget: React.FC<StatCardWidgetProps> = ({ widget, deviceId }) => 
 
   // Compute live value from WebSocket stream
   const liveValue = useMemo(() => {
-    if (!isLive || deviceMacs.length === 0) return null;
+    if (!isLive) return null;
+    
+    console.log(`[StatCardWidget] Computing live value for ${widget.title}`, { deviceMacs, channelIds, metric: widget.metric });
+    if (deviceMacs.length === 0) return null;
 
     let metric: 'power' | 'voltage' | 'current' = 'power';
     let unit = 'W';
@@ -64,8 +67,9 @@ const StatCardWidget: React.FC<StatCardWidgetProps> = ({ widget, deviceId }) => 
     }
 
     const value = getAggregatedValue(channelIds, deviceMacs, metric);
+    console.log(`[StatCardWidget] Computed value: ${value}${unit}`);
     return { value, unit };
-  }, [isLive, deviceMacs, channelIds, widget.metric, getAggregatedValue]);
+  }, [isLive, deviceMacs, channelIds, widget.metric, getAggregatedValue, widget.title]);
 
   // Historical polling (only for energy_usage)
   useEffect(() => {

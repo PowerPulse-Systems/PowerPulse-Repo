@@ -32,13 +32,14 @@ const Topbar: React.FC = () => {
   useEffect(() => {
     if (token) {
       devicesApi.getMyDevices().then((res) => {
+        console.log('[Topbar] Fetched devices:', res.data);
         setDevices(res.data);
         if (res.data.length > 0 && !activeDeviceId) {
           setActiveDevice(res.data[0].id);
         }
-      }).catch(err => console.error("Failed to load devices", err));
+      }).catch(err => console.error("[Topbar] Failed to load devices", err));
     }
-  }, [token]);
+  }, [token, activeDeviceId, setActiveDevice]);
 
   const handleAddDevice = () => {
     setDevicesOpen(false);

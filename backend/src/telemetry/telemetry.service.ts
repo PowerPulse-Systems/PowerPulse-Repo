@@ -133,6 +133,8 @@ export class TelemetryService {
         };
       });
 
+      this.logger.log(`📡 Broadcasting live data for ${normalizedMac}: ${normalizedChannels.map(c => `vc${c.id}=${c.v}V`).join(', ')} (${normalizedChannels.length} channels)`);
+
       this.liveGateway.broadcastLiveData(normalizedMac, {
         voltage_channels: normalizedChannels,
         timestamp: Date.now(),

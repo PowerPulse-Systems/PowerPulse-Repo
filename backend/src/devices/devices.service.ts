@@ -292,6 +292,18 @@ export class DevicesService implements OnModuleInit, OnModuleDestroy {
     if (!device) throw new NotFoundException(`Device not found`);
     if (device.userId !== userId) throw new ConflictException('You do not own this device');
     
+    // Auto-increment channelIndex if not explicitly provided
+    let resolvedChannelIndex = channelIndex;
+    if (resolvedChannelIndex === undefined) {
+      const existingBreakers = await this.prisma.breaker.findMany({
+        where: { deviceId },
+        select: { channelIndex: true },
+        orderBy: { channelIndex: 'desc' },
+      });
+      const maxIndex = existingBreakers.length > 0 ? Math.max(...existingBreakers.map(b => b.channelIndex)) : 0;
+      resolvedChannelIndex = maxIndex + 1;
+    }
+
     // Check if user has a default building/panel, if not create one
     let panel = await this.prisma.panel.findFirst({
         where: { building: { name: 'Default Building' } }
@@ -309,13 +321,13 @@ export class DevicesService implements OnModuleInit, OnModuleDestroy {
       data: {
         label,
         phase: phase || null,
-        channelIndex: channelIndex !== undefined ? channelIndex : 1,
+        channelIndex: resolvedChannelIndex,
         deviceId,
         panelId: panel.id
       }
     });
 
-    this.logger.log(`Added breaker ${breaker.id} to device ${deviceId}`);
+    this.logger.log(`Added breaker ${breaker.id} (channelIndex: ${resolvedChannelIndex}) to device ${deviceId}`);
     return breaker;
   }
 

@@ -32,6 +32,7 @@ export function useLiveTelemetry(macAddresses: string[]) {
     if (!socket) return;
 
     const handler = (data: LivePayload) => {
+      console.log('[WS] Received live data:', data);
       if (!data.mac) return;
       setLiveData(prev => {
         const next = new Map(prev);
@@ -67,13 +68,22 @@ export function useLiveTelemetry(macAddresses: string[]) {
       if (!payload?.voltage_channels) continue;
 
       for (const vc of payload.voltage_channels) {
+        // For voltage metric, match directly by voltage channel ID
+        // This works even for channels without CTs (voltage-only phases)
+        if (metric === 'voltage') {
+          if (channelIds.length === 0 || channelIds.includes(vc.id)) {
+            voltageSum += vc.v || 0;
+            voltageCount++;
+          }
+          continue;
+        }
+
+        // For power/current/pf metrics, match by CT channel ID
         if (!Array.isArray(vc.ct)) continue;
         for (const ct of vc.ct) {
           if (channelIds.length === 0 || channelIds.includes(ct.id)) {
-            totalPower += ct.p;
-            totalCurrent += ct.i;
-            voltageSum += vc.v;
-            voltageCount++;
+            totalPower += ct.p || 0;
+            totalCurrent += ct.i || 0;
             if (ct.pf !== undefined) {
               pfSum += ct.pf;
               pfCount++;
